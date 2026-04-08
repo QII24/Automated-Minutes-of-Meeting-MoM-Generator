@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Real-time MoM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .recording { color: red; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-4">🎙️ Live MoM Recorder</h1>
+        
+        <div class="card p-4 shadow-sm mb-4 text-center">
+            <div id="status" class="mb-3">Status: Ready</div>
+            <div class="d-flex justify-content-center gap-2">
+                <button id="startBtn" onclick="startRecording()" class="btn btn-danger">🔴 Start Recording</button>
+                <button id="stopBtn" onclick="stopRecording()" class="btn btn-secondary" disabled>⏹️ Stop & Transcribe</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Transcription</h3>
+                <textarea id="transcript" class="form-control" rows="10" placeholder="Hasil suara muncul di sini..."></textarea>
+            </div>
+            <div class="col-md-6">
+                <h3>Action Items Table</h3>
+                <table class="table table-bordered bg-white" id="momTable">
+                    <thead>
+                        <tr>
+                            <th>Done</th>
+                            <th>Task</th>
+                            <th>PIC</th>
+                            <th>Deadline</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button onclick="addRow()" class="btn btn-sm btn-success">+ Tambah Baris Manual</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                sendAudioToServer(audioBlob);
+                audioChunks = [];
+            };
+
+            mediaRecorder.start();
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('status').innerHTML = '<b class="recording">Recording...</b>';
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').innerText = 'Processing transcription...';
+        }
+
+        async function sendAudioToServer(blob) {
+            const formData = new FormData();
+            formData.append('file', blob, 'recording.wav');
+
+            const response = await fetch('/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('transcript').value = data.text;
+            document.getElementById('status').innerText = 'Done!';
+        }
+
+        function addRow() {
+            const table = document.getElementById('momTable').getElementsByTagName('tbody')[0];
+            const row = table.insertRow();
+            row.innerHTML = `<td><input type="checkbox"></td><td contenteditable="true">...</td><td contenteditable="true">...</td><td contenteditable="true">...</td>`;
+        }
+    </script>
+</body>
+</html>
