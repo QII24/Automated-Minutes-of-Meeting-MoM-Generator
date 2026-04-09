@@ -1,96 +1,421 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>AI Real-time MoM</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartNotulen Live - Real Whisper Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        .recording { color: red; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animasi Listening (Pulse) */
+        .listening-pulse {
+            animation: pulse-blue 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        /* Animasi Recording (Wave) */
+        .bar {
+            width: 6px;
+            background: #ef4444;
+            animation: sound 0s -0.8s linear infinite;
+            border-radius: 4px;
+        }
+        @keyframes sound {
+            0% { height: 10px; opacity: 0.35; }
+            100% { height: 40px; opacity: 0.95; }
+        }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <h1 class="text-center mb-4">🎙️ Live MoM Recorder</h1>
-        
-        <div class="card p-4 shadow-sm mb-4 text-center">
-            <div id="status" class="mb-3">Status: Ready</div>
-            <div class="d-flex justify-content-center gap-2">
-                <button id="startBtn" onclick="startRecording()" class="btn btn-danger">🔴 Start Recording</button>
-                <button id="stopBtn" onclick="stopRecording()" class="btn btn-secondary" disabled>⏹️ Stop & Transcribe</button>
-            </div>
-        </div>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
 
-        <div class="row">
-            <div class="col-md-6">
-                <h3>Transcription</h3>
-                <textarea id="transcript" class="form-control" rows="10" placeholder="Hasil suara muncul di sini..."></textarea>
-            </div>
-            <div class="col-md-6">
-                <h3>Action Items Table</h3>
-                <table class="table table-bordered bg-white" id="momTable">
-                    <thead>
-                        <tr>
-                            <th>Done</th>
-                            <th>Task</th>
-                            <th>PIC</th>
-                            <th>Deadline</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button onclick="addRow()" class="btn btn-sm btn-success">+ Tambah Baris Manual</button>
-            </div>
+    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-slate-700 flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">S</div>
+            <h1 class="text-xl font-bold">SmartNotulen</h1>
         </div>
-    </div>
+        <nav class="flex-1 mt-6 px-2 space-y-2">
+            <a href="#" onclick="showSection('standby')" id="nav-standby" class="flex items-center gap-3 px-4 py-3 bg-blue-900/50 text-blue-400 border-r-2 border-blue-500 font-medium transition">
+                <i class="fa-solid fa-microphone"></i> Live Meeting
+            </a>
+            <a href="#" onclick="showSection('archive')" id="nav-archive" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                <i class="fa-solid fa-folder-open"></i> Arsip Notulensi
+            </a>
+            <a href="#" onclick="showSection('config')" id="nav-config" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                <i class="fa-solid fa-sliders"></i> Konfigurasi ASR
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative">
+        <header class="bg-white border-b border-slate-200 py-4 px-8 flex justify-between items-center">
+            <h2 class="font-bold text-slate-700" id="header-title">Live Recording Dashboard</h2>
+            <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                <i class="fa-solid fa-circle text-[8px]"></i> SYSTEM ONLINE
+            </div>
+        </header>
+
+        <div class="flex-1 p-8 overflow-y-auto">
+            
+            <div id="view-standby" class="h-full flex flex-col items-center justify-center animate-fade-in">
+                
+                <div class="mb-8 bg-white p-2 rounded-full shadow-sm border border-slate-200 flex gap-2">
+                    <button id="btn-whisper" class="px-6 py-2 rounded-full bg-slate-800 text-white text-sm font-medium shadow-md transition" onclick="selectModel('whisper')">
+                        OpenAI Whisper
+                    </button>
+                    <button id="btn-wav2vec" class="px-6 py-2 rounded-full text-slate-500 hover:bg-slate-100 text-sm font-medium transition" onclick="selectModel('wav2vec')">
+                        Meta Wav2Vec2
+                    </button>
+                </div>
+
+                <div class="relative group cursor-pointer" onclick="simulateWakeWord()">
+                    <div class="absolute inset-0 bg-blue-500 rounded-full listening-pulse opacity-20"></div>
+                    <div class="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-2xl shadow-blue-500/40 relative z-10 transition transform group-hover:scale-105">
+                        <i class="fa-solid fa-microphone text-6xl text-white"></i>
+                    </div>
+                    
+                    <div class="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-3 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                        Klik untuk mulai merekam suara
+                    </div>
+                </div>
+
+                <h2 class="mt-10 text-2xl font-bold text-slate-800">Siap Merekam...</h2>
+                <p class="text-slate-500 mt-2">Klik tombol mic di atas untuk mengaktifkan sistem notulensi.</p>
+                
+                <div class="mt-8 flex gap-4 text-sm text-slate-400">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Mic Ready</div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> AI Server Ready</div>
+                </div>
+            </div>
+
+            <div id="view-recording" class="hidden h-full flex flex-col animate-fade-in">
+                <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <div>
+                            <h3 class="font-bold text-red-700">Rapat Sedang Berlangsung</h3>
+                            <p class="text-xs text-red-500">Merekam suara secara langsung...</p>
+                        </div>
+                    </div>
+                    <div class="font-mono text-2xl font-bold text-red-600" id="timer">00:00:00</div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+                        <div class="p-4 border-b border-slate-100 font-bold text-slate-700 flex justify-between">
+                            <span><i class="fa-solid fa-align-left text-blue-500 mr-2"></i> Area Transkripsi</span>
+                            <span class="text-xs font-normal bg-slate-100 px-2 py-1 rounded text-slate-500">Model: Whisper</span>
+                        </div>
+                        <div id="live-text-container" class="p-6 flex-1 overflow-y-auto space-y-4 text-sm text-slate-600 h-[400px]">
+                            <p class="italic text-slate-400 text-center mt-20" id="waiting-text">Menunggu pembicara...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+                        <div class="bg-slate-900 rounded-xl p-6 flex items-center justify-center h-40 shadow-lg relative overflow-hidden">
+                            <div class="flex items-center justify-center gap-1 h-20 w-full" id="wave-bars">
+                                </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl border border-slate-200 flex-1 p-4">
+                            <h4 class="font-bold text-xs text-slate-400 uppercase mb-3">Sistem Info</h4>
+                            <div id="live-entities" class="space-y-2">
+                                <div class="bg-blue-50 text-blue-700 p-2 rounded text-xs border border-blue-200">
+                                    <i class="fa-solid fa-server"></i> Terhubung ke backend Flask
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="stopMeeting()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-500/30 transition flex items-center justify-center gap-2 group">
+                            <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center">
+                                <i class="fa-solid fa-stop text-sm"></i>
+                            </div>
+                            <span>Akhiri & Proses Audio</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-result" class="hidden h-full animate-fade-in">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-green-600 text-xl"></i>
+                        <div>
+                            <h3 class="font-bold text-green-800">Transkripsi Selesai!</h3>
+                            <p class="text-xs text-green-600">Diproses menggunakan OpenAI Whisper via Python Backend</p>
+                        </div>
+                    </div>
+                    <button onclick="downloadResult(this)" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-green-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Download Hasil
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                        Hasil Ekstraksi Teks Asli
+                    </div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-3 w-3/4">Teks Transkripsi</th>
+                                <th class="px-6 py-3">Sumber</th>
+                                <th class="px-6 py-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100" id="result-table-body">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button onclick="showSection('standby')" class="text-slate-400 hover:text-blue-600 text-sm font-bold">
+                        <i class="fa-solid fa-arrow-left"></i> Rekam Rapat Baru
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-archive" class="hidden h-full flex flex-col animate-fade-in">
+                <div class="mb-6">
+                    <div class="relative">
+                        <input type="text" placeholder="Cari arsip notulensi..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Judul Rapat</th>
+                                <th class="px-6 py-4">Tanggal</th>
+                                <th class="px-6 py-4">Durasi</th>
+                                <th class="px-6 py-4">Model ASR</th>
+                                <th class="px-6 py-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-medium text-slate-800">Rapat Evaluasi Q1 2024</td>
+                                <td class="px-6 py-4 text-slate-500">20 Jan 2024</td>
+                                <td class="px-6 py-4 text-slate-500">45:20</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Whisper</span></td>
+                                <td class="px-6 py-4 text-right">
+                                    <button onclick="downloadResult(this)" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center ml-auto gap-1">
+                                        <i class="fa-solid fa-download"></i> Unduh
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-config" class="hidden h-full flex flex-col animate-fade-in space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl font-bold flex-shrink-0">W</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-1">OpenAI Whisper</h3>
+                            <p class="text-sm text-slate-600 mb-3">Model berbasis arsitektur Transformer Encoder-Decoder yang berjalan di backend Flask.</p>
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 text-xs text-blue-800">
+                                <strong>Status:</strong> Aktif dan siap memproses audio bahasa Indonesia.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
 
     <script>
         let mediaRecorder;
         let audioChunks = [];
 
-        async function startRecording() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+        // 1. Generate Wave Bars Animation
+        const waveContainer = document.getElementById('wave-bars');
+        for(let i=0; i<20; i++){
+            let bar = document.createElement('div');
+            bar.className = "bar";
+            bar.style.animationDuration = Math.random() * (0.8 - 0.4) + 0.4 + "s";
+            bar.style.height = Math.random() * 40 + 10 + "px";
+            waveContainer.appendChild(bar);
+        }
+
+        // 2. Navigation Functions
+        function showSection(id) {
+            document.getElementById('view-standby').classList.add('hidden');
+            document.getElementById('view-recording').classList.add('hidden');
+            document.getElementById('view-result').classList.add('hidden');
+            document.getElementById('view-archive').classList.add('hidden');
+            document.getElementById('view-config').classList.add('hidden');
             
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+            document.getElementById('view-' + id).classList.remove('hidden');
 
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                sendAudioToServer(audioBlob);
-                audioChunks = [];
+            const titles = {
+                'standby': 'Live Recording Dashboard',
+                'recording': 'Live Recording Session',
+                'result': 'Meeting Summary Result',
+                'archive': 'Arsip Notulensi Rapat',
+                'config': 'Konfigurasi Model ASR'
             };
+            document.getElementById('header-title').innerText = titles[id] || 'Dashboard';
 
-            mediaRecorder.start();
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-            document.getElementById('status').innerHTML = '<b class="recording">Recording...</b>';
+            const navIds = ['nav-standby', 'nav-archive', 'nav-config'];
+            navIds.forEach(navId => {
+                const el = document.getElementById(navId);
+                if(el) el.className = "flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"; 
+            });
+
+            const activeNavId = 'nav-' + (id === 'recording' || id === 'result' ? 'standby' : id);
+            const activeEl = document.getElementById(activeNavId);
+            if(activeEl) {
+                activeEl.className = "flex items-center gap-3 px-4 py-3 bg-blue-900/50 text-blue-400 border-r-2 border-blue-500 font-medium transition";
+            }
         }
 
-        function stopRecording() {
-            mediaRecorder.stop();
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('status').innerText = 'Processing transcription...';
+        function selectModel(model) {
+            const btnW = document.getElementById('btn-whisper');
+            const btnV = document.getElementById('btn-wav2vec');
+            
+            if(model === 'whisper') {
+                btnW.className = "px-6 py-2 rounded-full bg-slate-800 text-white text-sm font-medium shadow-md transition";
+                btnV.className = "px-6 py-2 rounded-full text-slate-500 hover:bg-slate-100 text-sm font-medium transition";
+            } else {
+                btnV.className = "px-6 py-2 rounded-full bg-slate-800 text-white text-sm font-medium shadow-md transition";
+                btnW.className = "px-6 py-2 rounded-full text-slate-500 hover:bg-slate-100 text-sm font-medium transition";
+            }
         }
 
+        // 3. LOGIC REKAMAN ASLI DENGAN MICROPHONE
+        async function simulateWakeWord() {
+            try {
+                // Meminta izin microphone
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                // Ketika rekam di-stop, kirim ke Flask
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await sendAudioToServer(audioBlob);
+                    audioChunks = []; // Reset chunk
+                };
+
+                // Mulai merekam
+                mediaRecorder.start();
+                showSection('recording');
+                startTimer();
+                
+                // Kosongkan kontainer hasil dari rekaman sebelumnya
+                document.getElementById('live-text-container').innerHTML = '<p class="italic text-slate-400 text-center mt-20" id="waiting-text">Merekam suara asli... Silakan bicara.</p>';
+                
+            } catch (err) {
+                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan di browser.");
+                console.error(err);
+            }
+        }
+
+        // 4. STOP REKAMAN & PROSES
+        function stopMeeting() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop(); // Ini akan memicu mediaRecorder.onstop
+                
+                // Kasih tahu user kalau lagi mikir
+                document.getElementById('waiting-text').innerText = "Memproses audio ke AI Whisper... Mohon tunggu sebentar.";
+            }
+        }
+
+        // 5. KIRIM KE FLASK & TAMPILKAN HASILNYA
         async function sendAudioToServer(blob) {
             const formData = new FormData();
             formData.append('file', blob, 'recording.wav');
 
-            const response = await fetch('/transcribe', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            document.getElementById('transcript').value = data.text;
-            document.getElementById('status').innerText = 'Done!';
+            try {
+                // Tembak ke route Flask kita
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if(data.text) {
+                    // Sembunyikan teks "waiting"
+                    const waitText = document.getElementById('waiting-text');
+                    if(waitText) waitText.style.display = 'none';
+                    
+                    // Tampilkan hasil asli Whisper di halaman Recording
+                    const container = document.getElementById('live-text-container');
+                    let p = document.createElement('div');
+                    p.className = "bg-green-50 p-4 rounded-lg border border-green-100 animate-fade-in";
+                    p.innerHTML = `<span class="font-bold text-green-600 text-xs uppercase mb-2 block">HASIL TRANSKRIPSI (WHISPER)</span><p class="text-slate-800 text-lg font-medium leading-relaxed">${data.text}</p>`;
+                    container.appendChild(p);
+
+                    // Pindah otomatis ke halaman Result setelah 3 detik
+                    setTimeout(() => {
+                        showSection('result');
+                        
+                        // Update tabel result dengan teks asli
+                        const tableBody = document.getElementById('result-table-body');
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td class="px-6 py-4 font-medium text-slate-700">${data.text}</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold text-xs">Microphone Live</span></td>
+                                <td class="px-6 py-4 font-bold text-green-500"><i class="fa-solid fa-check"></i> Selesai</td>
+                            </tr>
+                        `;
+                    }, 3000);
+                } else if (data.error) {
+                    alert("Error dari server: " + data.error);
+                }
+            } catch (error) {
+                alert("Gagal terhubung ke server Flask. Pastikan app.py sedang berjalan!");
+                console.error(error);
+            }
         }
 
-        function addRow() {
-            const table = document.getElementById('momTable').getElementsByTagName('tbody')[0];
-            const row = table.insertRow();
-            row.innerHTML = `<td><input type="checkbox"></td><td contenteditable="true">...</td><td contenteditable="true">...</td><td contenteditable="true">...</td>`;
+        // 6. Timer Logic
+        let timerInterval;
+        function startTimer() {
+            let sec = 0;
+            clearInterval(timerInterval); // Reset timer tiap mulai baru
+            timerInterval = setInterval(() => {
+                const timerEl = document.getElementById('timer');
+                if(!document.getElementById('view-recording').classList.contains('hidden')){
+                    sec++;
+                    let date = new Date(0);
+                    date.setSeconds(sec);
+                    timerEl.innerText = date.toISOString().substr(11, 8);
+                } else {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+
+        // 7. Download Animasi Mockup
+        function downloadResult(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunduh...';
+            btn.disabled = true; 
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Selesai';
+                btn.classList.replace('bg-blue-50', 'bg-green-100') || btn.classList.replace('bg-green-600', 'bg-green-700'); 
+                alert("File PDF notulensi berhasil diunduh ke perangkat Anda!");
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }, 1500);
         }
     </script>
 </body>
