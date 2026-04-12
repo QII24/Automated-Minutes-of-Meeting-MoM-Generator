@@ -3,180 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartNotulen Live - Real Whisper Integration</title>
+    <title>SmartNotulen Live - Premium Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* Menggunakan font modern yang lebih bulat dan elegan */
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* Animasi Listening (Pulse) */
-        .listening-pulse { animation: pulse-blue 2s infinite; }
-        @keyframes pulse-blue {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        /* Animasi Listening (Pulse) yang lebih premium */
+        .listening-pulse { animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
+            70% { box-shadow: 0 0 0 30px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
         }
 
-        /* Animasi Recording (Wave) */
+        /* Animasi Recording (Wave) dengan efek gradasi */
         .bar {
-            width: 6px;
-            background: #ef4444;
-            animation: sound 0s -0.8s linear infinite;
-            border-radius: 4px;
+            width: 8px;
+            background: linear-gradient(to top, #3b82f6, #8b5cf6, #ec4899);
+            animation: sound 0s -0.8s ease-in-out infinite alternate;
+            border-radius: 99px;
         }
         @keyframes sound {
-            0% { height: 10px; opacity: 0.35; }
-            100% { height: 40px; opacity: 0.95; }
+            0% { height: 10px; opacity: 0.5; }
+            100% { height: 50px; opacity: 1; }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+<body class="bg-gradient-to-br from-slate-50 to-blue-50/50 text-slate-800 h-screen flex overflow-hidden selection:bg-blue-200">
 
-    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
-        <div class="p-6 border-b border-slate-700 flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">S</div>
-            <h1 class="text-xl font-bold">SmartNotulen</h1>
+    <aside class="w-72 bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col hidden md:flex shadow-2xl z-20 relative">
+        <div class="p-8 flex items-center gap-4 border-b border-white/10">
+            <div class="w-10 h-10 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center font-extrabold shadow-lg shadow-blue-500/30">S</div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight">SmartNotulen</h1>
+                <p class="text-[10px] text-blue-300 tracking-widest uppercase mt-0.5">Skripsi Edition</p>
+            </div>
         </div>
-        <nav class="flex-1 mt-6 px-2 space-y-2">
-            <a href="#" onclick="showSection('standby')" id="nav-standby" class="flex items-center gap-3 px-4 py-3 bg-blue-900/50 text-blue-400 border-r-2 border-blue-500 font-medium transition">
-                <i class="fa-solid fa-microphone"></i> Live Meeting
+        <nav class="flex-1 mt-8 px-4 space-y-2">
+            <a href="#" onclick="showSection('standby')" id="nav-standby" class="flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10">
+                <i class="fa-solid fa-microphone-lines text-blue-400"></i> Live Meeting
             </a>
-            <a href="#" onclick="showSection('archive')" id="nav-archive" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
-                <i class="fa-solid fa-folder-open"></i> Arsip Notulensi
+            <a href="#" onclick="showSection('archive')" id="nav-archive" class="flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+                <i class="fa-solid fa-folder-open text-slate-500"></i> Arsip Notulensi
             </a>
-            <a href="#" onclick="showSection('config')" id="nav-config" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
-                <i class="fa-solid fa-sliders"></i> Konfigurasi ASR
+            <a href="#" onclick="showSection('config')" id="nav-config" class="flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+                <i class="fa-solid fa-sliders text-slate-500"></i> Konfigurasi ASR
             </a>
         </nav>
     </aside>
 
-    <main class="flex-1 flex flex-col relative">
-        <header class="bg-white border-b border-slate-200 py-4 px-8 flex justify-between items-center">
-            <h2 class="font-bold text-slate-700" id="header-title">Live Recording Dashboard</h2>
-            <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
-                <i class="fa-solid fa-circle text-[8px]"></i> SYSTEM ONLINE
+    <main class="flex-1 flex flex-col relative w-full">
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 py-5 px-8 flex justify-between items-center z-10 sticky top-0">
+            <h2 class="font-bold text-slate-800 text-lg tracking-tight" id="header-title">Live Recording Dashboard</h2>
+            <div class="flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-xs font-bold border border-green-200 shadow-sm">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> SYSTEM ONLINE
             </div>
         </header>
 
-        <div class="flex-1 p-8 overflow-y-auto">
+        <div class="flex-1 p-6 md:p-10 overflow-y-auto">
             
             <div id="view-standby" class="h-full flex flex-col items-center justify-center animate-fade-in">
-                <div class="mb-8 bg-white p-2 rounded-full shadow-sm border border-slate-200 flex gap-2">
-                    <button class="px-6 py-2 rounded-full bg-slate-800 text-white text-sm font-medium shadow-md transition">
-                        OpenAI Whisper
-                    </button>
+                <div class="mb-12 bg-white/60 backdrop-blur-sm p-1.5 rounded-full shadow-sm border border-slate-200 flex gap-2">
+                    <div class="px-6 py-2 rounded-full bg-slate-800 text-white text-xs font-bold tracking-wide shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-blue-400"></i> Powered by Whisper AI
+                    </div>
                 </div>
 
                 <div class="relative group cursor-pointer" onclick="startLiveMeeting()">
-                    <div class="absolute inset-0 bg-blue-500 rounded-full listening-pulse opacity-20"></div>
-                    <div class="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-2xl shadow-blue-500/40 relative z-10 transition transform group-hover:scale-105">
-                        <i class="fa-solid fa-microphone text-6xl text-white"></i>
+                    <div class="absolute inset-0 bg-indigo-500 rounded-full listening-pulse opacity-40"></div>
+                    <div class="w-48 h-48 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(99,102,241,0.4)] relative z-10 transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-[0_0_60px_rgba(99,102,241,0.6)]">
+                        <i class="fa-solid fa-microphone text-7xl text-white drop-shadow-md group-hover:scale-110 transition-transform duration-300"></i>
                     </div>
-                    <div class="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-3 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                    <div class="absolute -bottom-20 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-sm text-white text-xs font-bold px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition duration-300 whitespace-nowrap shadow-xl">
                         Klik untuk mulai merekam
+                        <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800/90 rotate-45"></div>
                     </div>
                 </div>
 
-                <h2 class="mt-10 text-2xl font-bold text-slate-800">Siap Merekam...</h2>
-                <p class="text-slate-500 mt-2">Klik tombol mic di atas untuk mengaktifkan sistem transkripsi live.</p>
+                <h2 class="mt-14 text-3xl font-extrabold text-slate-800 tracking-tight">Sistem Siap Merekam</h2>
+                <p class="text-slate-500 mt-3 text-center max-w-md font-medium">Klik tombol mikrofon di atas untuk mengaktifkan sistem transkripsi live otomatis.</p>
             </div>
 
-            <div id="view-recording" class="hidden h-full flex flex-col animate-fade-in">
-                <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div id="view-recording" class="hidden h-full flex flex-col animate-fade-in max-w-6xl mx-auto">
+                <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-2xl p-5 flex justify-between items-center mb-8 shadow-sm">
+                    <div class="flex items-center gap-5">
+                        <div class="relative flex items-center justify-center w-12 h-12 bg-red-100 rounded-full">
+                            <div class="absolute w-4 h-4 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                            <div class="relative w-4 h-4 bg-red-500 rounded-full"></div>
+                        </div>
                         <div>
-                            <h3 class="font-bold text-red-700">Rapat Sedang Berlangsung</h3>
-                            <p class="text-xs text-red-500">Merekam dan mentranskripsi secara langsung... (Loading tiap 10 detik)</p>
+                            <h3 class="font-extrabold text-red-800 text-lg">Rapat Sedang Berlangsung</h3>
+                            <p class="text-sm font-medium text-red-600/80">Mentranskripsi secara langsung... (Loading tiap 10 detik)</p>
                         </div>
                     </div>
-                    <div class="font-mono text-2xl font-bold text-red-600" id="timer">00:00:00</div>
+                    <div class="bg-white/60 px-6 py-2 rounded-xl border border-red-100">
+                        <div class="font-mono text-3xl font-extrabold text-red-600 tracking-wider" id="timer">00:00:00</div>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                        <div class="p-4 border-b border-slate-100 font-bold text-slate-700 flex justify-between">
-                            <span><i class="fa-solid fa-align-left text-blue-500 mr-2"></i> Teks Live</span>
-                            <span class="text-xs font-normal bg-slate-100 px-2 py-1 rounded text-slate-500">Model: Whisper</span>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200/60 flex flex-col overflow-hidden">
+                        <div class="p-5 bg-slate-50/50 border-b border-slate-100 font-bold text-slate-700 flex justify-between items-center">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-align-left text-blue-500"></i> Teks Live</span>
+                            <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full border border-indigo-100 uppercase tracking-widest">Model: Whisper</span>
                         </div>
-                        <div id="live-text-container" class="p-6 flex-1 overflow-y-auto space-y-4 text-sm text-slate-600 h-[400px]">
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 min-h-[100px]">
-                                <span class="font-bold text-blue-600 text-xs uppercase mb-2 block animate-pulse">🔴 MENDENGARKAN... SILAKAN BICARA</span>
-                                <p id="live-text" class="text-slate-800 text-lg font-medium leading-relaxed"></p>
+                        <div id="live-text-container" class="p-8 flex-1 overflow-y-auto space-y-4 h-[450px]">
+                            <div class="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-6 rounded-2xl border border-blue-100/50 min-h-[150px] shadow-inner">
+                                <span class="font-bold text-blue-600/70 text-[11px] tracking-widest uppercase mb-4 block flex items-center gap-2">
+                                    <i class="fa-solid fa-ear-listen animate-pulse"></i> Mendengarkan Suara...
+                                </span>
+                                <p id="live-text" class="text-slate-800 text-lg md:text-xl font-medium leading-relaxed"></p>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-6">
-                        <div class="bg-slate-900 rounded-xl p-6 flex items-center justify-center h-40 shadow-lg relative overflow-hidden">
-                            <div class="flex items-center justify-center gap-1 h-20 w-full" id="wave-bars">
+                        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center h-48 shadow-xl relative overflow-hidden border border-slate-700">
+                            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 relative z-10">Audio Input Signal</span>
+                            <div class="flex items-end justify-center gap-1.5 h-20 w-full relative z-10" id="wave-bars">
                                 </div>
                         </div>
 
-                        <div class="bg-white rounded-xl border border-slate-200 flex-1 p-4">
-                            <h4 class="font-bold text-xs text-slate-400 uppercase mb-3">Sistem Info</h4>
-                            <div class="space-y-2">
-                                <div class="bg-blue-50 text-blue-700 p-2 rounded text-xs border border-blue-200">
-                                    <i class="fa-solid fa-server"></i> Terhubung ke backend Flask
+                        <div class="bg-white rounded-2xl border border-slate-200/60 flex-1 p-6 shadow-sm">
+                            <h4 class="font-extrabold text-[11px] text-slate-400 uppercase tracking-widest mb-4">Status Sistem</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-server"></i></div>
+                                    Terhubung ke Flask
                                 </div>
-                                <div class="bg-green-50 text-green-700 p-2 rounded text-xs border border-green-200">
-                                    <i class="fa-solid fa-shield"></i> Filter Anti-Alien Aktif
+                                <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-shield"></i></div>
+                                    Filter Anti-Alien Aktif
                                 </div>
-                                <div class="bg-green-50 text-green-700 p-2 rounded text-xs border border-green-200">
-                                    <i class="fa-solid fa-bolt"></i> Audio Chunking Aktif (10s)
+                                <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
+                                    Chunking 10s Aktif
                                 </div>
                             </div>
                         </div>
 
-                        <button onclick="stopMeeting()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-500/30 transition flex items-center justify-center gap-2">
-                            <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center">
+                        <button onclick="stopMeeting()" class="group w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 rounded-2xl shadow-[0_8px_30px_rgb(239,68,68,0.3)] transition-all duration-300 flex items-center justify-center gap-3 transform hover:-translate-y-1">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition">
                                 <i class="fa-solid fa-stop text-sm"></i>
                             </div>
-                            <span>Akhiri Perekaman</span>
+                            <span class="text-lg">Akhiri Perekaman</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div id="view-result" class="hidden h-full animate-fade-in">
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-circle-check text-green-600 text-xl"></i>
+            <div id="view-result" class="hidden h-full animate-fade-in max-w-5xl mx-auto">
+                <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl p-6 mb-8 flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-2xl"></i>
+                        </div>
                         <div>
-                            <h3 class="font-bold text-green-800">Transkripsi Rapat Selesai!</h3>
-                            <p class="text-xs text-green-600">Seluruh teks berhasil direkam dan diproses.</p>
+                            <h3 class="font-extrabold text-emerald-800 text-lg">Transkripsi Rapat Selesai!</h3>
+                            <p class="text-sm font-medium text-emerald-600/80">Seluruh teks berhasil direkam dan diproses oleh server.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
-                        Hasil Ekstraksi Teks Lengkap
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-5 bg-slate-50 border-b border-slate-100 font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines text-blue-500"></i> Hasil Ekstraksi Teks Lengkap
                     </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
-                            <tr>
-                                <th class="px-6 py-3 w-3/4">Teks Transkripsi</th>
-                                <th class="px-6 py-3">Sumber</th>
-                                <th class="px-6 py-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100" id="result-table-body">
-                            </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50/50 text-slate-500 text-[11px] font-bold uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-4 w-3/4">Teks Transkripsi</th>
+                                    <th class="px-6 py-4">Sumber</th>
+                                    <th class="px-6 py-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="result-table-body">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
                 
-                <div class="mt-6 text-center">
-                    <button onclick="showSection('standby')" class="text-slate-400 hover:text-blue-600 text-sm font-bold">
-                        <i class="fa-solid fa-arrow-left"></i> Rekam Rapat Baru
+                <div class="mt-10 text-center">
+                    <button onclick="showSection('standby')" class="px-6 py-3 bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mx-auto">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Rekam Rapat Baru
                     </button>
                 </div>
             </div>
 
-            <div id="view-archive" class="hidden">Halaman Arsip (Dalam Pengembangan)</div>
-            <div id="view-config" class="hidden">Halaman Konfigurasi (Dalam Pengembangan)</div>
+            <div id="view-archive" class="hidden flex items-center justify-center h-full text-slate-400 font-medium">Halaman Arsip (Dalam Pengembangan)</div>
+            <div id="view-config" class="hidden flex items-center justify-center h-full text-slate-400 font-medium">Halaman Konfigurasi (Dalam Pengembangan)</div>
         </div>
     </main>
 
@@ -187,11 +214,11 @@
 
         // 1. Generate Animasi Visualizer
         const waveContainer = document.getElementById('wave-bars');
-        for(let i=0; i<20; i++){
+        for(let i=0; i<18; i++){
             let bar = document.createElement('div');
             bar.className = "bar";
             bar.style.animationDuration = Math.random() * (0.8 - 0.4) + 0.4 + "s";
-            bar.style.height = Math.random() * 40 + 10 + "px";
+            bar.style.height = Math.random() * 50 + 10 + "px";
             waveContainer.appendChild(bar);
         }
 
@@ -255,10 +282,10 @@
                 if(data.text && data.text.trim() !== "") {
                     const text = data.text.trim();
                     
-                    // Filter Anti-Alien: Deteksi simbol kotak tanya () atau huruf Rusia (Cyrillic)
-                    const isAlienText = text.includes("") || text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); // Tambah deteksi kanji mandarin
+                    // Filter Anti-Alien: Deteksi simbol aneh atau huruf asing
+                    const isAlienText = text.includes("") || text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
                     
-                    // Filter kasar: Abaikan teks kosong, terlalu pendek, halusinasi umum Whisper, dan teks alien
+                    // Filter kasar: Abaikan teks pendek, halusinasi umum Whisper, dan teks alien
                     if(!text.includes("Terima kasih") && !text.includes("Subtitle") && text.length > 5 && !isAlienText) {
                         fullTranscript += text + " ";
                         document.getElementById('live-text').innerText = fullTranscript;
@@ -279,14 +306,23 @@
                 isRecording = false; 
                 mediaRecorder.stop();
                 
+                // Matikan indikator mic browser
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
                 showSection('result');
                 
                 const tableBody = document.getElementById('result-table-body');
                 tableBody.innerHTML = `
                     <tr>
-                        <td class="px-6 py-4 font-medium text-slate-700">${fullTranscript || "Tidak ada suara yang terdeteksi."}</td>
-                        <td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold text-xs">Microphone Live</span></td>
-                        <td class="px-6 py-4 font-bold text-green-500"><i class="fa-solid fa-check"></i> Selesai</td>
+                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi."}</td>
+                        <td class="px-6 py-5">
+                            <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
+                                <i class="fa-solid fa-microphone-lines"></i> Live Mic
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 font-bold text-emerald-500 flex items-center gap-2 mt-1">
+                            <i class="fa-solid fa-check-circle"></i> Selesai
+                        </td>
                     </tr>
                 `;
             }
