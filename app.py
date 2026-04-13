@@ -3,65 +3,87 @@ import whisper
 import os
 import uuid
 
-# Inisialisasi aplikasi Flask
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-
-# Pastikan folder 'uploads' ada
 os.makedirs('uploads', exist_ok=True)
 
-print("Memuat model AI Whisper... (Tunggu sebentar, ini makan waktu beberapa detik)")
-# Menggunakan model "small" sesuai kebutuhan skripsimu
-model = whisper.load_model("small")
-print("Model Whisper berhasil dimuat! Server Flask siap digunakan.")
+# 1. State Konfigurasi Global
+current_config = {
+    "model_size": "small",
+    "language": "id",
+    "prompt": "Ini adalah rekaman rapat notulensi menggunakan bahasa Indonesia."
+}
+
+model = None
+
+# 2. Fungsi dinamis untuk memuat model
+def load_whisper_model(size):
+    global model
+    print(f"\n[SYSTEM] Memuat ulang model Whisper ukuran '{size}'... (Mohon tunggu)")
+    model = whisper.load_model(size)
+    print(f"[SYSTEM] Model '{size}' berhasil dimuat!\n")
+
+# Load model awal saat server nyala
+load_whisper_model(current_config["model_size"])
 
 @app.route('/')
 def index():
-    # Menampilkan halaman utama
     return render_template('index.html')
 
+# --- ENDPOINT KONFIGURASI ---
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    return jsonify(current_config)
+
+@app.route('/api/config', methods=['POST'])
+def update_config():
+    global current_config
+    new_config = request.json
+    
+    # Jika ukuran model diubah oleh user, muat ulang modelnya
+    if new_config.get('model_size') and new_config['model_size'] != current_config['model_size']:
+        try:
+            load_whisper_model(new_config['model_size'])
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Gagal memuat model: {str(e)}"}), 500
+            
+    # Update konfigurasi saat ini
+    current_config.update(new_config)
+    return jsonify({"status": "success", "config": current_config})
+
+# --- ENDPOINT TRANSKRIPSI ---
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
-    # 1. Cek apakah browser mengirim file
     if 'file' not in request.files:
-        print("[DEBUG] ERROR: Tidak ada file dari browser!")
         return jsonify({"error": "Tidak ada file"}), 400
     
     file = request.files['file']
     if file.filename == '':
-        print("[DEBUG] ERROR: Nama file kosong!")
         return jsonify({"error": "File kosong"}), 400
         
-    # 2. Simpan file audio dengan nama unik agar tidak bentrok
     filename = f"rekaman_{uuid.uuid4().hex}.webm"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
 
-    # 3. Sistem Detektif: Cek ukuran file
     file_size = os.path.getsize(filepath)
-    print(f"\n[DEBUG] Audio masuk! Ukuran: {file_size} bytes")
-    
     if file_size < 5000:
-        print("[DEBUG] PERINGATAN: File sangat kecil, kemungkinan mic tidak merekam suara.")
+        print("[DEBUG] PERINGATAN: File sangat kecil.")
 
     try:
-        # 4. Proses Transkripsi Anti-Halusinasi
+        # 3. Gunakan konfigurasi dinamis saat transkripsi
         result = model.transcribe(
             filepath, 
-            language='id',
+            language=current_config['language'] if current_config['language'] != 'auto' else None,
             fp16=False,
             condition_on_previous_text=False,
-            initial_prompt="Ini adalah rekaman rapat notulensi menggunakan bahasa Indonesia."
+            initial_prompt=current_config['prompt']
         )
         
         teks_hasil = result["text"].strip()
-        print(f"[DEBUG] Hasil AI: '{teks_hasil}'")
         
-        # 5. Hapus file audio setelah selesai diproses
         if os.path.exists(filepath):
             os.remove(filepath)
-        
-        # 6. Kirim hasil kembali ke browser
+            
         if not teks_hasil:
             return jsonify({"text": "Tidak ada suara yang terdeteksi."})
 

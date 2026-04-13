@@ -32,6 +32,10 @@
             100% { height: 50px; opacity: 1; }
         }
 
+        /* Animasi Fade In */
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
@@ -51,13 +55,13 @@
         </div>
         <nav class="flex-1 mt-8 px-4 space-y-2">
             <a href="#" onclick="showSection('standby')" id="nav-standby" class="flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10">
-                <i class="fa-solid fa-microphone-lines text-blue-400"></i> Live Meeting
+                <i class="fa-solid fa-microphone-lines text-blue-400 w-5 text-center"></i> Live Meeting
             </a>
             <a href="#" onclick="showSection('archive')" id="nav-archive" class="flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                <i class="fa-solid fa-folder-open text-slate-500"></i> Arsip Notulensi
+                <i class="fa-solid fa-folder-open text-slate-500 w-5 text-center"></i> Arsip Notulensi
             </a>
             <a href="#" onclick="showSection('config')" id="nav-config" class="flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                <i class="fa-solid fa-sliders text-slate-500"></i> Konfigurasi ASR
+                <i class="fa-solid fa-sliders text-slate-500 w-5 text-center"></i> Konfigurasi ASR
             </a>
         </nav>
     </aside>
@@ -70,7 +74,7 @@
             </div>
         </header>
 
-        <div class="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div class="flex-1 p-6 md:p-10 overflow-y-auto relative">
             
             <div id="view-standby" class="h-full flex flex-col items-center justify-center animate-fade-in">
                 <div class="mb-12 bg-white/60 backdrop-blur-sm p-1.5 rounded-full shadow-sm border border-slate-200 flex gap-2">
@@ -131,8 +135,7 @@
                         <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center h-48 shadow-xl relative overflow-hidden border border-slate-700">
                             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
                             <span class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 relative z-10">Audio Input Signal</span>
-                            <div class="flex items-end justify-center gap-1.5 h-20 w-full relative z-10" id="wave-bars">
-                                </div>
+                            <div class="flex items-end justify-center gap-1.5 h-20 w-full relative z-10" id="wave-bars"></div>
                         </div>
 
                         <div class="bg-white rounded-2xl border border-slate-200/60 flex-1 p-6 shadow-sm">
@@ -189,8 +192,7 @@
                                     <th class="px-6 py-4">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100" id="result-table-body">
-                                </tbody>
+                            <tbody class="divide-y divide-slate-100" id="result-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -202,8 +204,67 @@
                 </div>
             </div>
 
-            <div id="view-archive" class="hidden flex items-center justify-center h-full text-slate-400 font-medium">Halaman Arsip (Dalam Pengembangan)</div>
-            <div id="view-config" class="hidden flex items-center justify-center h-full text-slate-400 font-medium">Halaman Konfigurasi (Dalam Pengembangan)</div>
+            <div id="view-archive" class="hidden flex flex-col items-center justify-center h-full text-slate-400 font-medium animate-fade-in">
+                <i class="fa-solid fa-folder-open text-6xl mb-4 text-slate-300"></i>
+                <h2 class="text-xl font-bold text-slate-500">Arsip Notulensi</h2>
+                <p class="text-sm mt-2">Fitur sedang dalam pengembangan.</p>
+            </div>
+
+            <div id="view-config" class="hidden h-full animate-fade-in max-w-4xl mx-auto py-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-lg">Konfigurasi ASR (Whisper)</h2>
+                            <p class="text-xs text-slate-500 font-medium">Atur parameter engine AI untuk mengoptimalkan akurasi dan kecepatan.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 space-y-6">
+                        <div id="config-alert" class="hidden bg-blue-50 text-blue-700 p-4 rounded-xl border border-blue-200 text-sm font-medium flex items-center gap-3 mb-6">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <span id="config-alert-text">Menyimpan konfigurasi dan memuat model AI... (Ini bisa memakan waktu)</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-bold text-slate-700">Ukuran Model (Model Size)</label>
+                                <select id="config-model" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    <option value="tiny">Tiny (Sangat Cepat, Akurasi Rendah)</option>
+                                    <option value="base">Base (Cepat, Akurasi Lumayan)</option>
+                                    <option value="small" selected>Small (Seimbang, Cocok untuk Skripsi)</option>
+                                    <option value="medium">Medium (Lambat, Akurasi Tinggi)</option>
+                                    <option value="large">Large (Sangat Lambat, Paling Akurat)</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-bold text-slate-700">Paksa Bahasa (Language)</label>
+                                <select id="config-lang" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    <option value="id" selected>Indonesia (id)</option>
+                                    <option value="en">Inggris (en)</option>
+                                    <option value="auto">Auto-Detect (Otomatis)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-sm font-bold text-slate-700">Initial Prompt (Konteks AI)</label>
+                            <textarea id="config-prompt" rows="3" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">Ini adalah rekaman rapat notulensi menggunakan bahasa Indonesia.</textarea>
+                            <p class="text-[11px] text-slate-400 mt-1">Prompt ini membantu AI mengenali konteks dan istilah spesifik.</p>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-slate-100 flex justify-end">
+                            <button onclick="saveConfig()" id="btn-save-config" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-indigo-500/30 transition flex items-center gap-2">
+                                <i class="fa-solid fa-save"></i> Simpan Konfigurasi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -212,7 +273,7 @@
         let isRecording = false;
         let fullTranscript = ""; 
 
-        // 1. Generate Animasi Visualizer
+        // --- 1. Generate Animasi Visualizer ---
         const waveContainer = document.getElementById('wave-bars');
         for(let i=0; i<18; i++){
             let bar = document.createElement('div');
@@ -222,21 +283,102 @@
             waveContainer.appendChild(bar);
         }
 
+        // --- 2. Logika Navigasi Halaman ---
         function showSection(id) {
+            // Sembunyikan semua konten
             ['standby', 'recording', 'result', 'archive', 'config'].forEach(view => {
                 document.getElementById('view-' + view).classList.add('hidden');
             });
+            
+            // Tampilkan konten yang dipilih
             document.getElementById('view-' + id).classList.remove('hidden');
 
+            // Update Header Title
             const titles = {
                 'standby': 'Live Recording Dashboard',
                 'recording': 'Live Recording Session',
-                'result': 'Meeting Summary Result'
+                'result': 'Meeting Summary Result',
+                'archive': 'Arsip Notulensi',
+                'config': 'Konfigurasi Parameter AI'
             };
             document.getElementById('header-title').innerText = titles[id] || 'Dashboard';
+
+            // Update Style Sidebar (Aktif/Tidak Aktif)
+            const activeClass = "flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10";
+            const inactiveClass = "flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition";
+            
+            ['standby', 'archive', 'config'].forEach(navId => {
+                const el = document.getElementById('nav-' + navId);
+                if (el) {
+                    // Jika user di halaman recording/result, sidebar 'standby' (Live Meeting) tetap menyala
+                    if (navId === id || (id === 'recording' && navId === 'standby') || (id === 'result' && navId === 'standby')) {
+                        el.className = activeClass;
+                        el.querySelector('i').classList.replace('text-slate-500', 'text-blue-400');
+                    } else {
+                        el.className = inactiveClass;
+                        el.querySelector('i').classList.replace('text-blue-400', 'text-slate-500');
+                    }
+                }
+            });
         }
 
-        // 3. MULAI REKAM & KIRIM CHUNK Tiap 10 Detik
+        // --- 3. Logika Konfigurasi ASR (Backend Flask) ---
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                document.getElementById('config-model').value = data.model_size;
+                document.getElementById('config-lang').value = data.language;
+                document.getElementById('config-prompt').value = data.prompt;
+            } catch (e) {
+                console.error("Gagal memuat konfigurasi", e);
+            }
+        }
+
+        // Panggil konfigurasi saat web pertama dimuat
+        window.addEventListener('DOMContentLoaded', loadConfig);
+
+        async function saveConfig() {
+            const btn = document.getElementById('btn-save-config');
+            const alertBox = document.getElementById('config-alert');
+            const alertText = document.getElementById('config-alert-text');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            alertBox.classList.remove('hidden');
+            alertBox.className = "bg-blue-50 text-blue-700 p-4 rounded-xl border border-blue-200 text-sm font-medium flex items-center gap-3 mb-6";
+            alertText.innerText = "Menyimpan konfigurasi dan merestart model AI...";
+
+            const newConfig = {
+                model_size: document.getElementById('config-model').value,
+                language: document.getElementById('config-lang').value,
+                prompt: document.getElementById('config-prompt').value
+            };
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                });
+                
+                if(response.ok) {
+                    alertBox.className = "bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 text-sm font-medium flex items-center gap-3 mb-6";
+                    alertBox.innerHTML = '<i class="fa-solid fa-check-circle"></i> Konfigurasi berhasil disimpan dan siap digunakan!';
+                } else {
+                    throw new Error("Server error");
+                }
+            } catch (e) {
+                alertBox.className = "bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm font-medium flex items-center gap-3 mb-6";
+                alertBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Gagal menyimpan konfigurasi!';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan Konfigurasi';
+                setTimeout(() => alertBox.classList.add('hidden'), 5000);
+            }
+        }
+
+        // --- 4. Rekaman Live & Chunking 10 Detik ---
         async function startLiveMeeting() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -246,7 +388,6 @@
                 document.getElementById('live-text').innerText = ""; 
                 isRecording = true;
                 
-                // EVENT: Terpanggil setiap 10 detik (10000ms)
                 mediaRecorder.ondataavailable = async (event) => {
                     if (event.data.size > 0 && isRecording) {
                         const chunkBlob = new Blob([event.data], { type: 'audio/webm' });
@@ -254,9 +395,7 @@
                     }
                 };
 
-                // Mulai merekam, potong data setiap 10 detik
                 mediaRecorder.start(10000);
-                
                 showSection('recording');
                 startTimer();
                 
@@ -266,7 +405,6 @@
             }
         }
 
-        // 4. KIRIM POTONGAN AUDIO KE FLASK DAN FILTER HALUSINASI (ANTI-ALIEN)
         async function sendChunkToServer(blob) {
             const formData = new FormData();
             formData.append('file', blob, 'chunk.webm');
@@ -278,19 +416,14 @@
                 });
                 const data = await response.json();
                 
-                // Jika ada teks hasil terjemahan
                 if(data.text && data.text.trim() !== "") {
                     const text = data.text.trim();
-                    
-                    // Filter Anti-Alien: Deteksi simbol aneh atau huruf asing
                     const isAlienText = text.includes("") || text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
                     
-                    // Filter kasar: Abaikan teks pendek, halusinasi umum Whisper, dan teks alien
                     if(!text.includes("Terima kasih") && !text.includes("Subtitle") && text.length > 5 && !isAlienText) {
                         fullTranscript += text + " ";
                         document.getElementById('live-text').innerText = fullTranscript;
                         
-                        // Auto-scroll ke bawah
                         const container = document.getElementById('live-text-container');
                         container.scrollTop = container.scrollHeight;
                     }
@@ -300,13 +433,10 @@
             }
         }
 
-        // 5. STOP REKAMAN & TAMPILKAN HASIL AKHIR
         function stopMeeting() {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 isRecording = false; 
                 mediaRecorder.stop();
-                
-                // Matikan indikator mic browser
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 
                 showSection('result');
@@ -328,7 +458,6 @@
             }
         }
 
-        // 6. Timer Logic
         let timerInterval;
         function startTimer() {
             let sec = 0;
