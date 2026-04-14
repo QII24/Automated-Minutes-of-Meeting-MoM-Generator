@@ -166,7 +166,7 @@
                 </div>
             </div>
 
-            <div id="view-result" class="hidden h-full animate-fade-in max-w-5xl mx-auto">
+            <div id="view-result" class="hidden h-full animate-fade-in max-w-5xl mx-auto pb-10">
                 <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl p-6 mb-8 flex justify-between items-center shadow-sm">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -179,7 +179,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-6">
                     <div class="p-5 bg-slate-50 border-b border-slate-100 font-bold text-slate-700 flex items-center gap-2">
                         <i class="fa-solid fa-file-lines text-blue-500"></i> Hasil Ekstraksi Teks Lengkap
                     </div>
@@ -197,10 +197,21 @@
                     </div>
                 </div>
                 
-                <div class="mt-10 text-center">
-                    <button onclick="showSection('standby')" class="px-6 py-3 bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mx-auto">
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+                    <button onclick="generateSummaryAI()" id="btn-generate-ai" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)
+                    </button>
+                    <button onclick="showSection('standby')" class="px-8 py-3.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-slate-200">
                         <i class="fa-solid fa-arrow-rotate-left"></i> Rekam Rapat Baru
                     </button>
+                </div>
+
+                <div id="ai-summary-container" class="hidden mt-8 bg-gradient-to-br from-indigo-50 to-purple-50/50 rounded-2xl shadow-sm border border-indigo-100 overflow-hidden animate-fade-in">
+                    <div class="p-5 bg-indigo-100/60 border-b border-indigo-100 font-bold text-indigo-800 flex items-center gap-2">
+                        <i class="fa-solid fa-robot"></i> Hasil Ringkasan Gemini AI
+                    </div>
+                    <div class="p-8 text-slate-700 font-medium whitespace-pre-wrap leading-relaxed text-base" id="ai-summary-text">
+                        </div>
                 </div>
             </div>
 
@@ -292,6 +303,11 @@
             
             // Tampilkan konten yang dipilih
             document.getElementById('view-' + id).classList.remove('hidden');
+            
+            // Sembunyikan box rangkuman jika kembali ke standby
+            if(id === 'standby') {
+                document.getElementById('ai-summary-container').classList.add('hidden');
+            }
 
             // Update Header Title
             const titles = {
@@ -303,14 +319,13 @@
             };
             document.getElementById('header-title').innerText = titles[id] || 'Dashboard';
 
-            // Update Style Sidebar (Aktif/Tidak Aktif)
+            // Update Style Sidebar
             const activeClass = "flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10";
             const inactiveClass = "flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition";
             
             ['standby', 'archive', 'config'].forEach(navId => {
                 const el = document.getElementById('nav-' + navId);
                 if (el) {
-                    // Jika user di halaman recording/result, sidebar 'standby' (Live Meeting) tetap menyala
                     if (navId === id || (id === 'recording' && navId === 'standby') || (id === 'result' && navId === 'standby')) {
                         el.className = activeClass;
                         el.querySelector('i').classList.replace('text-slate-500', 'text-blue-400');
@@ -335,7 +350,6 @@
             }
         }
 
-        // Panggil konfigurasi saat web pertama dimuat
         window.addEventListener('DOMContentLoaded', loadConfig);
 
         async function saveConfig() {
@@ -389,6 +403,7 @@
                 isRecording = true;
                 
                 mediaRecorder.ondataavailable = async (event) => {
+                    // Validasi: pastikan sedang recording dan datanya ada
                     if (event.data.size > 0 && isRecording) {
                         const chunkBlob = new Blob([event.data], { type: 'audio/webm' });
                         await sendChunkToServer(chunkBlob);
@@ -400,7 +415,7 @@
                 startTimer();
                 
             } catch (err) {
-                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan.");
+                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan di browser.");
                 console.error(err);
             }
         }
@@ -410,17 +425,21 @@
             formData.append('file', blob, 'chunk.webm');
 
             try {
-                const response = await fetch('/transcribe', {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch('/transcribe', { method: 'POST', body: formData });
                 const data = await response.json();
                 
                 if(data.text && data.text.trim() !== "") {
                     const text = data.text.trim();
-                    const isAlienText = text.includes("") || text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
                     
-                    if(!text.includes("Terima kasih") && !text.includes("Subtitle") && text.length > 5 && !isAlienText) {
+                    // PERBAIKAN BUG: Hilangkan .includes("") karena selalu bernilai true
+                    const isAlienText = text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
+                    
+                    // Filter kata halusinasi Whisper yang sering muncul
+                    const isHallucination = text.toLowerCase().includes("terima kasih") || 
+                                            text.toLowerCase().includes("subtitle") || 
+                                            text.toLowerCase().includes("amara.org");
+                    
+                    if(text.length > 5 && !isAlienText && !isHallucination) {
                         fullTranscript += text + " ";
                         document.getElementById('live-text').innerText = fullTranscript;
                         
@@ -444,7 +463,7 @@
                 const tableBody = document.getElementById('result-table-body');
                 tableBody.innerHTML = `
                     <tr>
-                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi."}</td>
+                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi selama rekaman."}</td>
                         <td class="px-6 py-5">
                             <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
                                 <i class="fa-solid fa-microphone-lines"></i> Live Mic
@@ -455,6 +474,47 @@
                         </td>
                     </tr>
                 `;
+            }
+        }
+
+        // --- 5. PERBAIKAN: Fungsi Memanggil Gemini AI ---
+        async function generateSummaryAI() {
+            if(!fullTranscript || fullTranscript.trim() === "") {
+                alert("Teks masih kosong, tidak ada yang bisa dirangkum.");
+                return;
+            }
+
+            const btnAI = document.getElementById('btn-generate-ai');
+            const summaryContainer = document.getElementById('ai-summary-container');
+            const summaryText = document.getElementById('ai-summary-text');
+
+            // UI Loading State
+            btnAI.disabled = true;
+            btnAI.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyusun Notulensi...';
+            summaryContainer.classList.remove('hidden');
+            summaryText.innerHTML = '<span class="text-indigo-400 animate-pulse"><i class="fa-solid fa-robot"></i> Mengirim teks ke server Gemini AI... Tunggu sebentar ya!</span>';
+
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: fullTranscript })
+                });
+                
+                const data = await response.json();
+                
+                if(data.summary) {
+                    summaryText.innerText = data.summary;
+                } else {
+                    summaryText.innerHTML = `<span class="text-red-500">Gagal: ${data.error}</span>`;
+                }
+            } catch (err) {
+                summaryText.innerHTML = '<span class="text-red-500">Terjadi kesalahan sistem saat menghubungi server AI.</span>';
+                console.error(err);
+            } finally {
+                // Kembalikan tombol seperti semula
+                btnAI.disabled = false;
+                btnAI.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)';
             }
         }
 
