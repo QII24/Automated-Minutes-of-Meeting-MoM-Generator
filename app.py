@@ -6,7 +6,7 @@ import google.generativeai as genai  # [BARU] Import library LLM
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-os.makedirs('uploads', exist_ok=True)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # ==========================================
 # 1. KONFIGURASI LLM (GEMINI AI)
@@ -143,3 +143,5 @@ def summarize_meeting():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
