@@ -11,7 +11,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # ==========================================
 # 1. KONFIGURASI LLM (GEMINI AI)
 # ==========================================
-# Ganti dengan API Key kamu yang valid
+# Dapatkan API Key gratis di: https://aistudio.google.com/
 API_KEY = "AIzaSyDi9TPMLlCDZOFJj3PBPYH9xPT3IGStBoAs" 
 genai.configure(api_key=API_KEY)
 llm_model = genai.GenerativeModel("gemini-1.5-flash") # Model ringan dan cepat
@@ -82,7 +82,7 @@ def transcribe():
 
     file_size = os.path.getsize(filepath)
     if file_size < 5000:
-        print("[DEBUG] PERINGATAN: File sangat kecil.")
+        print(f"[DEBUG] PERINGATAN: File sangat kecil ({file_size} bytes).")
 
     try:
         # Gunakan konfigurasi dinamis saat transkripsi
@@ -156,5 +156,4 @@ def summarize_meeting():
         return jsonify({"error": "Gagal menghasilkan ringkasan AI."}), 500
 
 if __name__ == '__main__':
-    # HANYA GUNAKAN INI UNTUK TESTING LOKAL
     app.run(debug=True, port=5000)

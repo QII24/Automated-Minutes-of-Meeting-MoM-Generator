@@ -9,18 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* Menggunakan font modern yang lebih bulat dan elegan */
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        /* Animasi Listening (Pulse) yang lebih premium */
         .listening-pulse { animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
             70% { box-shadow: 0 0 0 30px rgba(99, 102, 241, 0); }
             100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
         }
-
-        /* Animasi Recording (Wave) dengan efek gradasi */
         .bar {
             width: 8px;
             background: linear-gradient(to top, #3b82f6, #8b5cf6, #ec4899);
@@ -31,12 +26,8 @@
             0% { height: 10px; opacity: 0.5; }
             100% { height: 50px; opacity: 1; }
         }
-
-        /* Animasi Fade In */
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -151,7 +142,7 @@
                                 </div>
                                 <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
                                     <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
-                                    Chunking 10s Aktif
+                                    Chunking Terotomatisasi
                                 </div>
                             </div>
                         </div>
@@ -280,9 +271,11 @@
     </main>
 
     <script>
+        // === VARIABEL GLOBAL ===
         let mediaRecorder;
         let isRecording = false;
         let fullTranscript = ""; 
+        let globalStream = null;
 
         // --- 1. Generate Animasi Visualizer ---
         const waveContainer = document.getElementById('wave-bars');
@@ -296,20 +289,14 @@
 
         // --- 2. Logika Navigasi Halaman ---
         function showSection(id) {
-            // Sembunyikan semua konten
             ['standby', 'recording', 'result', 'archive', 'config'].forEach(view => {
                 document.getElementById('view-' + view).classList.add('hidden');
             });
-            
-            // Tampilkan konten yang dipilih
             document.getElementById('view-' + id).classList.remove('hidden');
-            
-            // Sembunyikan box rangkuman jika kembali ke standby
             if(id === 'standby') {
                 document.getElementById('ai-summary-container').classList.add('hidden');
             }
 
-            // Update Header Title
             const titles = {
                 'standby': 'Live Recording Dashboard',
                 'recording': 'Live Recording Session',
@@ -319,7 +306,6 @@
             };
             document.getElementById('header-title').innerText = titles[id] || 'Dashboard';
 
-            // Update Style Sidebar
             const activeClass = "flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10";
             const inactiveClass = "flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition";
             
@@ -349,7 +335,6 @@
                 console.error("Gagal memuat konfigurasi", e);
             }
         }
-
         window.addEventListener('DOMContentLoaded', loadConfig);
 
         async function saveConfig() {
@@ -392,29 +377,60 @@
             }
         }
 
-        // --- 4. Rekaman Live & Chunking 10 Detik ---
+        // --- 4. Rekaman Live & Chunking Dinamis (SUDAH DIPERBAIKI 100%) ---
         async function startLiveMeeting() {
             try {
+                // Meminta akses mic
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                globalStream = stream; // Simpan stream secara global agar bisa dimatikan nanti
                 
                 fullTranscript = ""; 
                 document.getElementById('live-text').innerText = ""; 
                 isRecording = true;
                 
-                mediaRecorder.ondataavailable = async (event) => {
-                    if (event.data.size > 0 && isRecording) {
-                        const chunkBlob = new Blob([event.data], { type: 'audio/webm' });
-                        await sendChunkToServer(chunkBlob);
-                    }
-                };
-
-                mediaRecorder.start(10000);
                 showSection('recording');
                 startTimer();
+
+                // Fungsi Rekursif: Merekam per 10 detik dan membuat file Utuh
+                function recordNextChunk() {
+                    if (!isRecording) return; // Hentikan loop jika sedang tidak recording
+
+                    mediaRecorder = new MediaRecorder(stream);
+                    let chunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) chunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const chunkBlob = new Blob(chunks, { type: 'audio/webm' });
+                        
+                        // Kirim ke server hanya jika file tidak kosong
+                        if (chunkBlob.size > 4000) {
+                            await sendChunkToServer(chunkBlob);
+                        }
+                        
+                        // Setelah selesai, mulai rekam chunk 10 detik berikutnya
+                        if (isRecording) {
+                            recordNextChunk();
+                        }
+                    };
+
+                    mediaRecorder.start();
+
+                    // Otomatis stop dan trigger onstop setelah 10 detik
+                    setTimeout(() => {
+                        if (mediaRecorder.state === "recording") {
+                            mediaRecorder.stop();
+                        }
+                    }, 10000);
+                }
+
+                // Mulai siklus perekaman
+                recordNextChunk();
                 
             } catch (err) {
-                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan di browser. Buka via http://localhost:5000 atau http://127.0.0.1:5000");
+                alert("Gagal mengakses microphone! Pastikan Anda membuka web lewat http://127.0.0.1:5000 dan memberi izin akses.");
                 console.error(err);
             }
         }
@@ -430,7 +446,7 @@
                 if(data.text && data.text.trim() !== "") {
                     const text = data.text.trim();
                     
-                    // Filter kata aneh (cyrillic/hanzi) atau halusinasi whisper
+                    // Filter kata aneh atau halusinasi whisper
                     const isAlienText = text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
                     const isHallucination = text.toLowerCase().includes("terima kasih") || 
                                             text.toLowerCase().includes("subtitle") || 
@@ -450,28 +466,33 @@
         }
 
         function stopMeeting() {
+            isRecording = false; // Memutus siklus rekaman 10 detikan
+            
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
-                isRecording = false; 
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                
-                showSection('result');
-                
-                const tableBody = document.getElementById('result-table-body');
-                tableBody.innerHTML = `
-                    <tr>
-                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi selama rekaman. Pastikan mic berfungsi dan dekat dengan sumber suara."}</td>
-                        <td class="px-6 py-5">
-                            <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
-                                <i class="fa-solid fa-microphone-lines"></i> Live Mic
-                            </span>
-                        </td>
-                        <td class="px-6 py-5 font-bold text-emerald-500 flex items-center gap-2 mt-1">
-                            <i class="fa-solid fa-check-circle"></i> Selesai
-                        </td>
-                    </tr>
-                `;
+                mediaRecorder.stop(); // Hentikan rekaman terakhir
             }
+            
+            // Matikan lampu indikator Mic di laptop
+            if (globalStream) {
+                globalStream.getTracks().forEach(track => track.stop());
+            }
+            
+            showSection('result');
+            
+            const tableBody = document.getElementById('result-table-body');
+            tableBody.innerHTML = `
+                <tr>
+                    <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi selama rekaman. Pastikan mic berfungsi."}</td>
+                    <td class="px-6 py-5">
+                        <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
+                            <i class="fa-solid fa-microphone-lines"></i> Live Mic
+                        </span>
+                    </td>
+                    <td class="px-6 py-5 font-bold text-emerald-500 flex items-center gap-2 mt-1">
+                        <i class="fa-solid fa-check-circle"></i> Selesai
+                    </td>
+                </tr>
+            `;
         }
 
         // --- 5. Fungsi Memanggil Gemini AI untuk MoM ---
