@@ -7,16 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
         .listening-pulse { animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
             70% { box-shadow: 0 0 0 30px rgba(99, 102, 241, 0); }
             100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
         }
+
         .bar {
             width: 8px;
             background: linear-gradient(to top, #3b82f6, #8b5cf6, #ec4899);
@@ -27,18 +30,53 @@
             0% { height: 10px; opacity: 0.5; }
             100% { height: 50px; opacity: 1; }
         }
+
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* CSS Khusus agar Tabel AI Rapi */
-        #ai-summary-text table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; }
-        #ai-summary-text th, #ai-summary-text td { border: 1px solid #cdd5df; padding: 12px; text-align: left; }
-        #ai-summary-text th { background-color: #e2e8f0; font-weight: bold; color: #334155; }
-        #ai-summary-text h3 { font-size: 1.125rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1e293b; }
+
+        /* --- CSS KHUSUS UNTUK TABEL MoM AI --- */
+        #ai-summary-text table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background-color: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        #ai-summary-text th {
+            background-color: #f8fafc;
+            color: #334155;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        #ai-summary-text td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.875rem;
+        }
+        #ai-summary-text tr:last-child td { border-bottom: none; }
+        #ai-summary-text h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        #ai-summary-text strong { color: #0f172a; }
+        #ai-summary-text ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #475569; }
+        #ai-summary-text hr { margin: 2rem 0; border-color: #e2e8f0; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-blue-50/50 text-slate-800 h-screen flex overflow-hidden selection:bg-blue-200">
@@ -140,12 +178,16 @@
                             <h4 class="font-extrabold text-[11px] text-slate-400 uppercase tracking-widest mb-4">Status Sistem</h4>
                             <div class="space-y-3">
                                 <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-server"></i></div>
+                                    Terhubung ke Server
+                                </div>
+                                <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
                                     <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-shield"></i></div>
-                                    Filter Anti-Ngelantur Aktif
+                                    Filter Anti-Alien Aktif
                                 </div>
                                 <div class="flex items-center gap-3 bg-slate-50 text-slate-700 p-3 rounded-xl border border-slate-100 font-medium text-sm">
                                     <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
-                                    Chunking 10s Aktif
+                                    Chunking 10s Seamless Aktif
                                 </div>
                             </div>
                         </div>
@@ -173,7 +215,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-8">
                     <div class="p-5 bg-slate-50 border-b border-slate-100 font-bold text-slate-700 flex items-center gap-2">
                         <i class="fa-solid fa-file-lines text-blue-500"></i> Hasil Ekstraksi Teks Lengkap
                     </div>
@@ -191,7 +233,7 @@
                     </div>
                 </div>
                 
-                <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <button onclick="generateSummaryAI()" id="btn-generate-ai" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-1">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)
                     </button>
@@ -200,12 +242,16 @@
                     </button>
                 </div>
 
-                <div id="ai-summary-container" class="hidden mt-8 bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden animate-fade-in">
-                    <div class="p-5 bg-indigo-50 border-b border-indigo-100 font-bold text-indigo-800 flex items-center gap-2">
-                        <i class="fa-solid fa-robot"></i> Hasil Minutes of Meeting & Action Item AI
-                    </div>
-                    <div class="p-8 text-slate-800 font-medium leading-relaxed text-base prose max-w-none" id="ai-summary-text">
+                <div id="ai-summary-container" class="hidden mt-8 animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-sm border border-indigo-200 overflow-hidden">
+                        <div class="p-5 bg-indigo-50/50 border-b border-indigo-100 font-bold text-indigo-800 flex items-center gap-2">
+                            <i class="fa-solid fa-robot text-indigo-500"></i> Hasil Minutes of Meeting & Action Item AI
                         </div>
+                        <div class="p-8">
+                            <div id="ai-summary-text" class="text-slate-700">
+                                </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -230,31 +276,36 @@
                     <div class="p-8 space-y-6">
                         <div id="config-alert" class="hidden bg-blue-50 text-blue-700 p-4 rounded-xl border border-blue-200 text-sm font-medium flex items-center gap-3 mb-6">
                             <i class="fa-solid fa-circle-notch fa-spin"></i>
-                            <span id="config-alert-text">Menyimpan konfigurasi...</span>
+                            <span id="config-alert-text">Menyimpan konfigurasi dan memuat model AI...</span>
                         </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-2">
-                                <label class="block text-sm font-bold text-slate-700">Ukuran Model</label>
+                                <label class="block text-sm font-bold text-slate-700">Ukuran Model (Model Size)</label>
                                 <select id="config-model" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                                     <option value="tiny">Tiny</option>
                                     <option value="base">Base</option>
                                     <option value="small" selected>Small</option>
                                     <option value="medium">Medium</option>
+                                    <option value="large">Large</option>
                                 </select>
                             </div>
+
                             <div class="space-y-2">
-                                <label class="block text-sm font-bold text-slate-700">Paksa Bahasa</label>
+                                <label class="block text-sm font-bold text-slate-700">Paksa Bahasa (Language)</label>
                                 <select id="config-lang" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                                    <option value="id" selected>Indonesia</option>
-                                    <option value="en">Inggris</option>
+                                    <option value="id" selected>Indonesia (id)</option>
+                                    <option value="en">Inggris (en)</option>
                                     <option value="auto">Auto-Detect</option>
                                 </select>
                             </div>
                         </div>
+
                         <div class="space-y-2">
-                            <label class="block text-sm font-bold text-slate-700">Initial Prompt</label>
+                            <label class="block text-sm font-bold text-slate-700">Initial Prompt (Konteks AI)</label>
                             <textarea id="config-prompt" rows="3" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">Ini adalah rekaman rapat notulensi menggunakan bahasa Indonesia.</textarea>
                         </div>
+                        
                         <div class="pt-4 border-t border-slate-100 flex justify-end">
                             <button onclick="saveConfig()" id="btn-save-config" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-indigo-500/30 transition flex items-center gap-2">
                                 <i class="fa-solid fa-save"></i> Simpan Konfigurasi
@@ -268,11 +319,12 @@
     </main>
 
     <script>
-        let mediaRecorder;
+        let mediaRecorder = null;
         let isRecording = false;
         let fullTranscript = ""; 
         let globalStream = null;
 
+        // --- 1. Animasi Visualizer ---
         const waveContainer = document.getElementById('wave-bars');
         for(let i=0; i<18; i++){
             let bar = document.createElement('div');
@@ -282,13 +334,27 @@
             waveContainer.appendChild(bar);
         }
 
+        // --- 2. Navigasi ---
         function showSection(id) {
             ['standby', 'recording', 'result', 'archive', 'config'].forEach(view => {
                 document.getElementById('view-' + view).classList.add('hidden');
             });
             document.getElementById('view-' + id).classList.remove('hidden');
-            if(id === 'standby') { document.getElementById('ai-summary-container').classList.add('hidden'); }
-            
+
+            if(id === 'standby') {
+                document.getElementById('ai-summary-container').classList.add('hidden');
+                document.getElementById('ai-summary-text').innerHTML = "";
+            }
+
+            const titles = {
+                'standby': 'Live Recording Dashboard',
+                'recording': 'Live Recording Session',
+                'result': 'Meeting Summary Result',
+                'archive': 'Arsip Notulensi',
+                'config': 'Konfigurasi Parameter AI'
+            };
+            document.getElementById('header-title').innerText = titles[id] || 'Dashboard';
+
             const activeClass = "flex items-center gap-3 px-4 py-3.5 bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/5 transition shadow-lg shadow-black/10";
             const inactiveClass = "flex items-center gap-3 px-4 py-3.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition";
             
@@ -296,39 +362,21 @@
                 const el = document.getElementById('nav-' + navId);
                 if (el) {
                     if (navId === id || (id === 'recording' && navId === 'standby') || (id === 'result' && navId === 'standby')) {
-                        el.className = activeClass; el.querySelector('i').classList.replace('text-slate-500', 'text-blue-400');
+                        el.className = activeClass;
+                        el.querySelector('i').classList.replace('text-slate-500', 'text-blue-400');
                     } else {
-                        el.className = inactiveClass; el.querySelector('i').classList.replace('text-blue-400', 'text-slate-500');
+                        el.className = inactiveClass;
+                        el.querySelector('i').classList.replace('text-blue-400', 'text-slate-500');
                     }
                 }
             });
         }
 
-        async function loadConfig() {
-            try {
-                const res = await fetch('/api/config'); const data = await res.json();
-                document.getElementById('config-model').value = data.model_size;
-                document.getElementById('config-lang').value = data.language;
-                document.getElementById('config-prompt').value = data.prompt;
-            } catch (e) {}
-        }
-        window.addEventListener('DOMContentLoaded', loadConfig);
-
-        async function saveConfig() {
-            // Logic simpan konfigurasi...
-            const newConfig = {
-                model_size: document.getElementById('config-model').value,
-                language: document.getElementById('config-lang').value,
-                prompt: document.getElementById('config-prompt').value
-            };
-            await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newConfig) });
-            alert("Disimpan!");
-        }
-
+        // --- 3. Rekaman Seamless (Tanpa Macet) ---
         async function startLiveMeeting() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                globalStream = stream;
+                globalStream = stream; // Simpan stream untuk dimatikan nanti
                 
                 fullTranscript = ""; 
                 document.getElementById('live-text').innerText = ""; 
@@ -337,28 +385,46 @@
                 showSection('recording');
                 startTimer();
 
+                // Fungsi Rekursif: Berhenti & Mulai lagi tiap 10 detik
                 function recordNextChunk() {
                     if (!isRecording) return;
+                    
                     mediaRecorder = new MediaRecorder(stream);
                     let chunks = [];
 
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                    mediaRecorder.ondataavailable = (e) => { 
+                        if (e.data.size > 0) chunks.push(e.data); 
+                    };
+                    
                     mediaRecorder.onstop = async () => {
                         const chunkBlob = new Blob(chunks, { type: 'audio/webm' });
-                        if (chunkBlob.size > 4000) await sendChunkToServer(chunkBlob);
-                        if (isRecording) recordNextChunk();
+                        if (chunkBlob.size > 0) {
+                            sendChunkToServer(chunkBlob); // Jalan di background
+                        }
+                        if (isRecording) recordNextChunk(); // Langsung ngulang rekaman baru
                     };
 
                     mediaRecorder.start();
-                    setTimeout(() => { if (mediaRecorder.state === "recording") mediaRecorder.stop(); }, 10000);
+                    
+                    setTimeout(() => { 
+                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                            mediaRecorder.stop(); 
+                        }
+                    }, 10000); // 10 Detik
                 }
-                recordNextChunk();
-            } catch (err) { alert("Izinkan Mic ya!"); }
+                
+                recordNextChunk(); // Mulai!
+                
+            } catch (err) {
+                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan.");
+                console.error(err);
+            }
         }
 
         async function sendChunkToServer(blob) {
             const formData = new FormData();
             formData.append('file', blob, 'chunk.webm');
+
             try {
                 const response = await fetch('/transcribe', { method: 'POST', body: formData });
                 const data = await response.json();
@@ -367,48 +433,70 @@
                     const text = data.text.trim();
                     const textLower = text.toLowerCase();
                     
-                    // DAFTAR BLACKLIST (Menyaring halusinasi yang ada di screenshot kamu)
+                    // Filter Anti-Alien & Anti-Ngelantur
                     const isAlienText = text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
-                    const isHallucination = [
-                        "terima kasih", "subtitle", "amara.org", "bawa dia kembali", 
-                        "shit man", "selalu deaa", "oh lah", "waktu pake rap", "bawari"
-                    ].some(word => textLower.includes(word));
+                    const isHallucination = ["terima kasih", "subtitle", "amara.org", "bawa dia kembali", "shit man", "selalu deaa"].some(word => textLower.includes(word));
                     
-                    if(text.length > 5 && !isAlienText && !isHallucination) {
+                    if(text.length > 4 && !isAlienText && !isHallucination) {
                         fullTranscript += text + " ";
                         document.getElementById('live-text').innerText = fullTranscript;
+                        
                         const container = document.getElementById('live-text-container');
                         container.scrollTop = container.scrollHeight;
                     }
                 }
-            } catch (error) {}
+            } catch (error) {
+                console.error("Gagal mengirim chunk:", error);
+            }
         }
 
         function stopMeeting() {
             isRecording = false; 
-            if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
-            if (globalStream) globalStream.getTracks().forEach(track => track.stop());
+            
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+            if (globalStream) {
+                globalStream.getTracks().forEach(track => track.stop());
+            }
             
             showSection('result');
-            document.getElementById('result-table-body').innerHTML = `
+            
+            const tableBody = document.getElementById('result-table-body');
+            tableBody.innerHTML = `
                 <tr>
-                    <td class="px-6 py-5">${fullTranscript || "Kosong/Tidak ada suara jelas."}</td>
-                    <td class="px-6 py-5"><span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100">Live Mic</span></td>
-                    <td class="px-6 py-5 font-bold text-emerald-500"><i class="fa-solid fa-check-circle"></i> Selesai</td>
-                </tr>`;
+                    <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara jelas yang terdeteksi."}</td>
+                    <td class="px-6 py-5">
+                        <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
+                            <i class="fa-solid fa-microphone-lines"></i> Live Mic
+                        </span>
+                    </td>
+                    <td class="px-6 py-5 font-bold text-emerald-500 flex items-center gap-2 mt-1">
+                        <i class="fa-solid fa-check-circle"></i> Selesai
+                    </td>
+                </tr>
+            `;
         }
 
+        // --- 4. Render Ringkasan AI (Tabel MoM) ---
         async function generateSummaryAI() {
-            if(!fullTranscript) return alert("Belum ada teks!");
+            if(!fullTranscript || fullTranscript.trim() === "") {
+                alert("Belum ada teks transkripsi yang bisa diringkas!");
+                return;
+            }
 
             const btnAI = document.getElementById('btn-generate-ai');
             const summaryContainer = document.getElementById('ai-summary-container');
             const summaryText = document.getElementById('ai-summary-text');
 
             btnAI.disabled = true;
-            btnAI.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyusun Tabel Notulensi...';
+            btnAI.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Menganalisis Rapat...';
+            
             summaryContainer.classList.remove('hidden');
-            summaryText.innerHTML = '<span class="text-indigo-400 animate-pulse"><i class="fa-solid fa-robot"></i> AI sedang bekerja...</span>';
+            summaryText.innerHTML = `
+                <div class="flex items-center gap-3 text-indigo-500 font-medium animate-pulse">
+                    <i class="fa-solid fa-robot text-xl"></i> AI sedang menyusun Minutes of Meeting (MoM)...
+                </div>`;
 
             try {
                 const response = await fetch('/summarize', {
@@ -416,30 +504,69 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: fullTranscript })
                 });
+                
                 const data = await response.json();
                 
-                if(data.summary) {
-                    // Pakai marked.parse untuk menyulap text markdown AI menjadi TABEL HTML aseli!
+                if (data.summary) {
+                    // Gunakan marked.js untuk merubah Markdown API menjadi elemen HTML (termasuk Tabel)
                     summaryText.innerHTML = marked.parse(data.summary);
                 } else {
-                    summaryText.innerHTML = `<span class="text-red-500">Gagal: ${data.error}</span>`;
+                    summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200"><i class="fa-solid fa-triangle-exclamation"></i> Gagal: ${data.error || 'Server tidak merespon dengan benar.'}</div>`;
                 }
             } catch (err) {
-                summaryText.innerHTML = '<span class="text-red-500">Error server.</span>';
+                summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200"><i class="fa-solid fa-plug-circle-xmark"></i> Terjadi kesalahan koneksi ke server Flask. Pastikan API Key Gemini sudah benar di app.py.</div>`;
             } finally {
                 btnAI.disabled = false;
-                btnAI.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)';
+                btnAI.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ulang Ringkasan (AI)';
             }
         }
 
+        // --- 5. Utility ---
         let timerInterval;
         function startTimer() {
-            let sec = 0; clearInterval(timerInterval);
+            let sec = 0;
+            clearInterval(timerInterval);
             timerInterval = setInterval(() => {
+                const timerEl = document.getElementById('timer');
                 if(!document.getElementById('view-recording').classList.contains('hidden')){
-                    sec++; document.getElementById('timer').innerText = new Date(sec * 1000).toISOString().substr(11, 8);
-                } else clearInterval(timerInterval);
+                    sec++;
+                    let date = new Date(0);
+                    date.setSeconds(sec);
+                    timerEl.innerText = date.toISOString().substring(11, 19);
+                } else {
+                    clearInterval(timerInterval);
+                }
             }, 1000);
+        }
+
+        // Konfigurasi API
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                document.getElementById('config-model').value = data.model_size;
+                document.getElementById('config-lang').value = data.language;
+                document.getElementById('config-prompt').value = data.prompt;
+            } catch (e) {}
+        }
+        window.addEventListener('DOMContentLoaded', loadConfig);
+
+        async function saveConfig() {
+            const btn = document.getElementById('btn-save-config');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            const newConfig = {
+                model_size: document.getElementById('config-model').value,
+                language: document.getElementById('config-lang').value,
+                prompt: document.getElementById('config-prompt').value
+            };
+            try {
+                await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newConfig) });
+                alert("Konfigurasi disimpan!");
+            } catch (e) {
+                alert("Gagal menyimpan!");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan Konfigurasi';
+            }
         }
     </script>
 </body>
