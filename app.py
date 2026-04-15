@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import whisper
 import os
 import uuid
-import google.generativeai as genai  # [BARU] Import library LLM
+import google.generativeai as genai
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -11,8 +11,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # ==========================================
 # 1. KONFIGURASI LLM (GEMINI AI)
 # ==========================================
-# Dapatkan API Key gratis di: https://aistudio.google.com/
-API_KEY = "AIzaSyDi9TPMLlCDZOFJj3PBPYH9xPT3IGStBoAs"
+# Ganti dengan API Key kamu yang valid
+API_KEY = "AIzaSyDi9TPMLlCDZOFJj3PBPYH9xPT3IGStBoAs" 
 genai.configure(api_key=API_KEY)
 llm_model = genai.GenerativeModel("gemini-1.5-flash") # Model ringan dan cepat
 
@@ -111,7 +111,7 @@ def transcribe():
         return jsonify({"error": str(e)}), 500
 
 # ==========================================
-# 5. [BARU] ENDPOINT LLM UNTUK MERANGKUM NOTULENSI
+# 5. ENDPOINT LLM UNTUK MERANGKUM NOTULENSI (MoM)
 # ==========================================
 @app.route('/summarize', methods=['POST'])
 def summarize_meeting():
@@ -122,13 +122,27 @@ def summarize_meeting():
         return jsonify({"error": "Teks terlalu pendek untuk dirangkum."}), 400
         
     prompt_instruksi = f"""
-    Kamu adalah asisten notulensi profesional. Rapikan dan buat ringkasan dari teks transkripsi rapat acak berikut ini.
-    Buat menjadi format:
-    1. Judul Topik Rapat (Tebak dari konteks)
-    2. Poin-poin Penting Pembahasan
-    3. Keputusan / Action Items (Jika ada)
+    Kamu adalah asisten sekretaris profesional. Tugasmu adalah mengubah teks transkripsi rapat acak/berantakan berikut menjadi format Minutes of Meeting (MoM) yang rapi, terstruktur, dan profesional.
 
-    Teks Rapat:
+    Ekstrak informasi dari teks dan susun dengan format berikut:
+
+    # 📝 MINUTES OF MEETING (MoM)
+
+    **📌 Topik Rapat:** (Tebak judul/topik utama dari konteks pembicaraan)
+    
+    **💡 Ringkasan Pembahasan:**
+    (Buat poin-poin singkat tentang apa saja yang dibahas dalam rapat tersebut)
+
+    **✅ Keputusan Rapat:**
+    (Tuliskan keputusan akhir yang disepakati, jika ada)
+
+    **🎯 Action Items (Delegasi Tugas):**
+    (Buat dalam bentuk daftar berpoin. Wajib pisahkan siapa mengerjakan apa dan kapan deadlinenya. Jika nama/deadline tidak disebutkan dengan jelas, tulis "Tidak disebutkan" atau "Asumsi dari konteks").
+    Gunakan format seperti ini:
+    - [Nama/Divisi] | [Deskripsi Tugas] | 📅 Deadline: [Waktu/Tanggal]
+
+    ---
+    Teks Transkripsi Rapat:
     "{raw_text}"
     """
     
@@ -142,6 +156,5 @@ def summarize_meeting():
         return jsonify({"error": "Gagal menghasilkan ringkasan AI."}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
-
+    # HANYA GUNAKAN INI UNTUK TESTING LOKAL
+    app.run(debug=True, port=5000)
