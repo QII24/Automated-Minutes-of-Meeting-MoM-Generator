@@ -11,7 +11,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # ==========================================
 # 1. KONFIGURASI LLM (GEMINI AI)
 # ==========================================
-API_KEY = "API_KEY_KAMU_DISINI" # <-- Ganti pakai API Key kamu
+API_KEY = "AIzaSyBYLnoYiE1ANCafBl3WNkC6IQU2MaLTXDM" # <-- Ganti pakai API Key kamu
 genai.configure(api_key=API_KEY)
 llm_model = genai.GenerativeModel("gemini-1.5-flash")
 
