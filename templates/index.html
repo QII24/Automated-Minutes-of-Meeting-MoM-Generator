@@ -208,9 +208,9 @@
 
                 <div id="ai-summary-container" class="hidden mt-8 bg-gradient-to-br from-indigo-50 to-purple-50/50 rounded-2xl shadow-sm border border-indigo-100 overflow-hidden animate-fade-in">
                     <div class="p-5 bg-indigo-100/60 border-b border-indigo-100 font-bold text-indigo-800 flex items-center gap-2">
-                        <i class="fa-solid fa-robot"></i> Hasil Ringkasan Gemini AI
+                        <i class="fa-solid fa-robot"></i> Hasil Ringkasan Gemini AI (MoM & Tugas)
                     </div>
-                    <div class="p-8 text-slate-700 font-medium whitespace-pre-wrap leading-relaxed text-base" id="ai-summary-text">
+                    <div class="p-8 text-slate-800 font-medium whitespace-pre-wrap leading-relaxed text-base" id="ai-summary-text">
                         </div>
                 </div>
             </div>
@@ -403,7 +403,6 @@
                 isRecording = true;
                 
                 mediaRecorder.ondataavailable = async (event) => {
-                    // Validasi: pastikan sedang recording dan datanya ada
                     if (event.data.size > 0 && isRecording) {
                         const chunkBlob = new Blob([event.data], { type: 'audio/webm' });
                         await sendChunkToServer(chunkBlob);
@@ -415,7 +414,7 @@
                 startTimer();
                 
             } catch (err) {
-                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan di browser.");
+                alert("Gagal mengakses microphone! Pastikan izin sudah diberikan di browser. Buka via http://localhost:5000 atau http://127.0.0.1:5000");
                 console.error(err);
             }
         }
@@ -431,10 +430,8 @@
                 if(data.text && data.text.trim() !== "") {
                     const text = data.text.trim();
                     
-                    // PERBAIKAN BUG: Hilangkan .includes("") karena selalu bernilai true
+                    // Filter kata aneh (cyrillic/hanzi) atau halusinasi whisper
                     const isAlienText = text.match(/[а-яА-Я]/) || text.match(/[\u4e00-\u9fa5]/); 
-                    
-                    // Filter kata halusinasi Whisper yang sering muncul
                     const isHallucination = text.toLowerCase().includes("terima kasih") || 
                                             text.toLowerCase().includes("subtitle") || 
                                             text.toLowerCase().includes("amara.org");
@@ -463,7 +460,7 @@
                 const tableBody = document.getElementById('result-table-body');
                 tableBody.innerHTML = `
                     <tr>
-                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi selama rekaman."}</td>
+                        <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${fullTranscript || "Tidak ada suara yang terdeteksi selama rekaman. Pastikan mic berfungsi dan dekat dengan sumber suara."}</td>
                         <td class="px-6 py-5">
                             <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-[11px] tracking-wide border border-indigo-100 flex items-center gap-1 w-max">
                                 <i class="fa-solid fa-microphone-lines"></i> Live Mic
@@ -477,7 +474,7 @@
             }
         }
 
-        // --- 5. PERBAIKAN: Fungsi Memanggil Gemini AI ---
+        // --- 5. Fungsi Memanggil Gemini AI untuk MoM ---
         async function generateSummaryAI() {
             if(!fullTranscript || fullTranscript.trim() === "") {
                 alert("Teks masih kosong, tidak ada yang bisa dirangkum.");
@@ -488,7 +485,6 @@
             const summaryContainer = document.getElementById('ai-summary-container');
             const summaryText = document.getElementById('ai-summary-text');
 
-            // UI Loading State
             btnAI.disabled = true;
             btnAI.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyusun Notulensi...';
             summaryContainer.classList.remove('hidden');
@@ -512,7 +508,6 @@
                 summaryText.innerHTML = '<span class="text-red-500">Terjadi kesalahan sistem saat menghubungi server AI.</span>';
                 console.error(err);
             } finally {
-                // Kembalikan tombol seperti semula
                 btnAI.disabled = false;
                 btnAI.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)';
             }
