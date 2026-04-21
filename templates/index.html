@@ -232,6 +232,9 @@
                     <button onclick="generateSummaryAI()" id="btn-generate-ai" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-1">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Ringkasan Notulensi (AI)
                     </button>
+                    <button onclick="saveToArchive()" id="btn-save-archive" class="hidden px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-1">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan ke Arsip
+                    </button>
                     <button onclick="showSection('standby')" class="px-8 py-3.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-slate-200">
                         <i class="fa-solid fa-arrow-rotate-left"></i> Rekam Rapat Baru
                     </button>
@@ -243,17 +246,47 @@
                             <i class="fa-solid fa-robot text-indigo-500"></i> Hasil Minutes of Meeting & Action Item AI
                         </div>
                         <div class="p-8">
-                            <div id="ai-summary-text" class="text-slate-700">
-                                </div>
+                            <div id="ai-summary-text" class="text-slate-700"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="view-archive" class="hidden flex flex-col items-center justify-center h-full text-slate-400 font-medium animate-fade-in">
-                <i class="fa-solid fa-folder-open text-6xl mb-4 text-slate-300"></i>
-                <h2 class="text-xl font-bold text-slate-500">Arsip Notulensi</h2>
-                <p class="text-sm mt-2">Fitur sedang dalam pengembangan.</p>
+            <div id="view-archive" class="hidden h-full animate-fade-in max-w-5xl mx-auto py-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
+                    <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-slate-800 text-lg">Arsip Notulensi Rapat</h2>
+                                <p class="text-xs text-slate-500 font-medium">Daftar riwayat rapat yang telah disimpan di database.</p>
+                            </div>
+                        </div>
+                        <button onclick="loadArchives()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm font-bold flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-0">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50/50 text-slate-500 text-[11px] font-bold uppercase tracking-widest sticky top-0 backdrop-blur-md">
+                                <tr>
+                                    <th class="px-6 py-4">Waktu Rekaman</th>
+                                    <th class="px-6 py-4">Judul Rapat</th>
+                                    <th class="px-6 py-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="archive-table-body">
+                                <tr>
+                                    <td colspan="3" class="px-6 py-8 text-center text-slate-400 font-medium">
+                                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat arsip...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div id="view-config" class="hidden h-full animate-fade-in max-w-4xl mx-auto py-4">
@@ -319,6 +352,7 @@
         let isRecording = false;
         let fullTranscript = ""; 
         let globalStream = null;
+        let currentAISummary = ""; // Variabel baru untuk nyimpan hasil AI mentahan
 
         // --- 1. Animasi Visualizer ---
         const waveContainer = document.getElementById('wave-bars');
@@ -337,10 +371,10 @@
             });
             document.getElementById('view-' + id).classList.remove('hidden');
 
-            // Reset container AI kalau balik ke menu standby
             if(id === 'standby') {
                 document.getElementById('ai-summary-container').classList.add('hidden');
                 document.getElementById('ai-summary-text').innerHTML = "";
+                document.getElementById('btn-save-archive').classList.add('hidden'); // Sembunyikan tombol simpan
             }
 
             const titles = {
@@ -431,6 +465,7 @@
                 globalStream = stream;
                 
                 fullTranscript = ""; 
+                currentAISummary = "";
                 document.getElementById('live-text').innerText = ""; 
                 isRecording = true;
                 
@@ -471,7 +506,7 @@
             }
         }
 
-        // --- 5. Mengirim & Memfilter Halusinasi Lirik Lagu ---
+        // --- 5. Mengirim & Memfilter Halusinasi ---
         async function sendChunkToServer(blob) {
             const formData = new FormData();
             formData.append('file', blob, 'chunk.webm');
@@ -487,7 +522,6 @@
                     const text = data.text.trim();
                     const textLower = text.toLowerCase();
                     
-                    // DAFTAR HITAM: Di-update sesuai lirik lagu yang sering keluar di gambar kamu
                     const hallucinationKeywords = [
                         "terima kasih", "subtitle", "amara.org", "bawa dia kembali", 
                         "shit man", "selalu deaa", "sisa rasa", "kau menemukan", 
@@ -536,7 +570,7 @@
             `;
         }
 
-        // --- 6. Fungsi Tabel AI (Ini yang kemarin ilang/salah) ---
+        // --- 6. Fungsi Tabel AI ---
         async function generateSummaryAI() {
             if(!fullTranscript || fullTranscript.trim() === "") {
                 alert("Belum ada teks percakapan yang bisa diringkas!");
@@ -557,7 +591,6 @@
                 </div>`;
 
             try {
-                // Endpoint menuju app.py Flask kamu
                 const response = await fetch('/summarize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -566,10 +599,10 @@
                 
                 const data = await response.json();
                 
-                // Cek responnya sukses atau tidak
                 if (response.ok && data.summary) {
-                    // marked.parse() mengubah string Markdown dari server jadi Tabel HTML
+                    currentAISummary = data.summary; // Simpan summary ke variabel global
                     summaryText.innerHTML = marked.parse(data.summary);
+                    document.getElementById('btn-save-archive').classList.remove('hidden'); // Munculkan tombol simpan
                 } else {
                     summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Gagal dari Server Flask: ${data.error || 'Server tidak mengembalikan ringkasan AI.'} <br><br> <span class="text-xs">Cek terminal CMD/VSCode tempat jalannya app.py, pastikan tidak ada error dan API Key sudah benar.</span></div>`;
                 }
@@ -598,6 +631,113 @@
                 }
             }, 1000);
         }
+
+        // --- 8. FITUR ARSIP ---
+        async function saveToArchive() {
+            const judul = prompt("Masukkan judul untuk rapat ini:", "Rapat " + new Date().toLocaleDateString('id-ID'));
+            if (!judul) return; 
+
+            const btnSave = document.getElementById('btn-save-archive');
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            btnSave.disabled = true;
+
+            try {
+                const response = await fetch('/api/archive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        judul: judul,
+                        transcript: fullTranscript,
+                        summary: currentAISummary
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert("✅ " + data.pesan);
+                    loadArchives(); 
+                } else {
+                    alert("❌ Gagal menyimpan: " + data.error);
+                }
+            } catch (err) {
+                alert("❌ Terjadi kesalahan koneksi server saat menyimpan arsip.");
+            } finally {
+                btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan ke Arsip';
+                btnSave.disabled = false;
+            }
+        }
+
+        async function loadArchives() {
+            const tbody = document.getElementById('archive-table-body');
+            try {
+                const response = await fetch('/api/archive');
+                const archives = await response.json();
+                
+                if (archives.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400 font-medium"><i class="fa-solid fa-inbox text-3xl mb-3 block text-slate-300"></i>Belum ada arsip yang disimpan.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = archives.map(arc => `
+                    <tr class="hover:bg-slate-50 transition group">
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-slate-500">${arc.tanggal}</td>
+                        <td class="px-6 py-4 font-bold text-slate-700">${arc.judul}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <button onclick="viewArchive('${arc.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold transition">Buka</button>
+                            <button onclick="deleteArchive('${arc.id}')" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition opacity-0 group-hover:opacity-100">Hapus</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-red-500">Gagal memuat data arsip.</td></tr>`;
+            }
+        }
+
+        async function viewArchive(id) {
+            try {
+                const response = await fetch('/api/archive/' + id);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    fullTranscript = data.transcript;
+                    document.getElementById('result-table-body').innerHTML = `
+                        <tr>
+                            <td class="px-6 py-5 font-medium text-slate-700 leading-relaxed">${data.transcript || "-"}</td>
+                            <td class="px-6 py-5"><span class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-bold text-[11px] border border-slate-200"><i class="fa-solid fa-box-archive"></i> Database</span></td>
+                            <td class="px-6 py-5 font-bold text-slate-500"><i class="fa-solid fa-check"></i> Tersimpan</td>
+                        </tr>
+                    `;
+                    
+                    if (data.summary) {
+                        document.getElementById('ai-summary-text').innerHTML = marked.parse(data.summary);
+                        document.getElementById('ai-summary-container').classList.remove('hidden');
+                    } else {
+                        document.getElementById('ai-summary-container').classList.add('hidden');
+                    }
+                    
+                    const btnSave = document.getElementById('btn-save-archive');
+                    if(btnSave) btnSave.classList.add('hidden');
+
+                    showSection('result');
+                }
+            } catch (err) {
+                alert("Gagal membuka detail arsip.");
+            }
+        }
+
+        async function deleteArchive(id) {
+            if (!confirm("Yakin ingin menghapus arsip ini secara permanen?")) return;
+            
+            try {
+                const response = await fetch('/api/archive/' + id, { method: 'DELETE' });
+                if (response.ok) {
+                    loadArchives(); 
+                }
+            } catch (err) {
+                alert("Gagal menghapus arsip.");
+            }
+        }
+
+        document.getElementById('nav-archive').addEventListener('click', loadArchives);
     </script>
 </body>         
 </html>
