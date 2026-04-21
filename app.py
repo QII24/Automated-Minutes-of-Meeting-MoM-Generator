@@ -3,6 +3,8 @@ import whisper
 import os
 import uuid
 import google.generativeai as genai
+import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -73,7 +75,7 @@ def transcribe():
     file.save(filepath)
 
     try:
-        # PENGATURAN ANTI-HALUSINASI (Cegah ngelantur)
+        # PENGATURAN ANTI-HALUSINASI
         result = model.transcribe(
             filepath, 
             language=current_config['language'] if current_config['language'] != 'auto' else None,
@@ -111,7 +113,6 @@ def summarize_meeting():
     if not raw_text or len(raw_text) < 10:
         return jsonify({"error": "Teks terlalu pendek untuk dirangkum."}), 400
         
-    # PROMPT UPDATE: Memaksa Gemini membuat format TABEL
     prompt_instruksi = f"""
     Kamu adalah asisten sekretaris profesional. Tugasmu mengubah teks transkripsi rapat yang berantakan berikut menjadi Minutes of Meeting (MoM).
     
@@ -138,6 +139,72 @@ def summarize_meeting():
         return jsonify({"summary": response.text})
     except Exception as e:
         return jsonify({"error": "Gagal menghasilkan ringkasan AI."}), 500
+
+# ==========================================
+# 5. DATABASE SQLITE UNTUK ARSIP
+# ==========================================
+DB_NAME = "arsip_notulen.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS archives
+                 (id TEXT PRIMARY KEY, tanggal TEXT, judul TEXT, transcript TEXT, summary TEXT)''')
+    conn.commit()
+    conn.close()
+
+init_db() # Jalankan saat server start
+
+@app.route('/api/archive', methods=['POST'])
+def save_archive():
+    data = request.json
+    archive_id = uuid.uuid4().hex
+    tanggal = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    judul = data.get('judul', f"Rapat {tanggal}")
+    transcript = data.get('transcript', '')
+    summary = data.get('summary', '')
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("INSERT INTO archives (id, tanggal, judul, transcript, summary) VALUES (?, ?, ?, ?, ?)",
+                  (archive_id, tanggal, judul, transcript, summary))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "id": archive_id, "pesan": "Arsip berhasil disimpan!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/archive', methods=['GET'])
+def get_archives():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT id, tanggal, judul FROM archives ORDER BY tanggal DESC")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([dict(row) for row in rows])
+
+@app.route('/api/archive/<archive_id>', methods=['GET'])
+def get_archive_detail(archive_id):
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM archives WHERE id=?", (archive_id,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return jsonify(dict(row))
+    return jsonify({"error": "Arsip tidak ditemukan"}), 404
+
+@app.route('/api/archive/<archive_id>', methods=['DELETE'])
+def delete_archive(archive_id):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM archives WHERE id=?", (archive_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "pesan": "Arsip berhasil dihapus!"})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
