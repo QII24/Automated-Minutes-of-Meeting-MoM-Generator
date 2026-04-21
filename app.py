@@ -82,9 +82,9 @@ def transcribe():
             fp16=False,
             condition_on_previous_text=False,
             initial_prompt=current_config['prompt'],
-            no_speech_threshold=0.6,       # Abaikan jika sebagian besar noise
-            logprob_threshold=-1.0,        # Batas percaya diri model
-            compression_ratio_threshold=2.4 # Cegah pengulangan kata
+            no_speech_threshold=0.6,
+            logprob_threshold=-1.0,
+            compression_ratio_threshold=2.4
         )
         
         teks_hasil = result["text"].strip()
@@ -141,7 +141,7 @@ def summarize_meeting():
         return jsonify({"error": "Gagal menghasilkan ringkasan AI."}), 500
 
 # ==========================================
-# 5. DATABASE SQLITE UNTUK ARSIP
+# 5. DATABASE SQLITE UNTUK ARSIP (YANG SEBELUMNYA HILANG)
 # ==========================================
 DB_NAME = "arsip_notulen.db"
 
@@ -153,7 +153,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db() # Jalankan saat server start
+init_db()
 
 @app.route('/api/archive', methods=['POST'])
 def save_archive():
