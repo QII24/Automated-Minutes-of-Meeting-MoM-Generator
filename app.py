@@ -113,21 +113,28 @@ def summarize_meeting():
     if not raw_text or len(raw_text) < 10:
         return jsonify({"error": "Teks terlalu pendek untuk dirangkum."}), 400
         
+    # INSTRUKSI BARU: Diperketat dan dipaksa buat tabel dengan 3 kolom spesifik
     prompt_instruksi = f"""
-    Kamu adalah asisten sekretaris profesional. Tugasmu mengubah teks transkripsi rapat yang berantakan berikut menjadi Minutes of Meeting (MoM).
+    Kamu adalah asisten sekretaris profesional. Tugasmu mengubah teks transkripsi rapat berikut menjadi Minutes of Meeting (MoM).
     
-    Wajib gunakan format Markdown di bawah ini:
+    ATURAN PENTING:
+    1. Gunakan bahasa Indonesia yang rapi dan profesional.
+    2. WAJIB gunakan format Markdown di bawah ini tanpa mengubah nama strukturnya.
+    3. Bagian "Action Items" WAJIB berupa tabel Markdown dengan 3 kolom persis seperti contoh. Jangan gabungkan ke dalam paragraf biasa.
+    4. Jika teks transkripsi tidak masuk akal (hanya kata acak/noise mic), isi ringkasan dengan kalimat "Tidak ada informasi rapat yang jelas untuk disimpulkan." dan kosongkan tabelnya.
+    
+    FORMAT YANG WAJIB DIGUNAKAN:
     
     ### 📝 MINUTES OF MEETING (MoM)
     **📌 Topik Rapat:** (Tebak topik utama dari pembahasan)
-    **💡 Ringkasan:** (Poin-poin singkat)
+    **💡 Ringkasan:** (Buat poin-poin singkat dan jelas dari pembahasan)
     
     ### 🎯 Action Items (Delegasi Tugas)
-    Buatlah dalam bentuk TABEL dengan kolom berikut. Jika ada info yang tidak disebutkan (misal: deadlinenya tidak ada), tulis saja "Tidak disebutkan" atau tumpuk/gabungkan saja tebakan dari konteks yang ada.
+    (Wajib bentuk TABEL. Jika info tidak disebutkan, tulis "Tidak disebutkan")
     
     | Siapa (PIC) | Apa (Tugas/Action Item) | Kapan (Deadline) |
     |---|---|---|
-    | ... | ... | ... |
+    | (nama/divisi) | (deskripsi tugas) | (waktu deadline) |
     
     ---
     Teks Transkripsi Rapat:
@@ -141,7 +148,7 @@ def summarize_meeting():
         return jsonify({"error": "Gagal menghasilkan ringkasan AI."}), 500
 
 # ==========================================
-# 5. DATABASE SQLITE UNTUK ARSIP (YANG SEBELUMNYA HILANG)
+# 5. DATABASE SQLITE UNTUK ARSIP
 # ==========================================
 DB_NAME = "arsip_notulen.db"
 
