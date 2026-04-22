@@ -39,7 +39,9 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* CSS KHUSUS UNTUK MERAPIKAN TABEL MoM DARI AI */
+        /* =========================================
+           CSS KHUSUS UNTUK MERAPIKAN TABEL MoM DARI AI 
+           ========================================= */
         #ai-summary-text table {
             width: 100%;
             border-collapse: collapse;
@@ -374,7 +376,7 @@
             if(id === 'standby') {
                 document.getElementById('ai-summary-container').classList.add('hidden');
                 document.getElementById('ai-summary-text').innerHTML = "";
-                document.getElementById('btn-save-archive').classList.add('hidden'); // Sembunyikan tombol simpan
+                document.getElementById('btn-save-archive').classList.add('hidden'); 
             }
 
             const titles = {
@@ -601,10 +603,11 @@
                 
                 if (response.ok && data.summary) {
                     currentAISummary = data.summary; // Simpan summary ke variabel global
+                    // Parse MARKDOWN KE HTML AGAR TABEL JADI RAPI
                     summaryText.innerHTML = marked.parse(data.summary);
                     document.getElementById('btn-save-archive').classList.remove('hidden'); // Munculkan tombol simpan
                 } else {
-                    summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Gagal dari Server Flask: ${data.error || 'Server tidak mengembalikan ringkasan AI.'} <br><br> <span class="text-xs">Cek terminal CMD/VSCode tempat jalannya app.py, pastikan tidak ada error dan API Key sudah benar.</span></div>`;
+                    summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Gagal dari Server Flask: ${data.error || 'Server tidak mengembalikan ringkasan AI.'}</div>`;
                 }
             } catch (err) {
                 summaryText.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium"><i class="fa-solid fa-plug-circle-xmark"></i> Terjadi kesalahan koneksi ke server Flask (/summarize). Cek apakah backend menyala.</div>`;
@@ -632,7 +635,7 @@
             }, 1000);
         }
 
-        // --- 8. FITUR ARSIP ---
+        // --- 8. FITUR ARSIP YANG SUDAH DIPERBAIKI ---
         async function saveToArchive() {
             const judul = prompt("Masukkan judul untuk rapat ini:", "Rapat " + new Date().toLocaleDateString('id-ID'));
             if (!judul) return; 
@@ -655,6 +658,7 @@
                 if (response.ok) {
                     alert("✅ " + data.pesan);
                     loadArchives(); 
+                    showSection('archive');
                 } else {
                     alert("❌ Gagal menyimpan: " + data.error);
                 }
@@ -688,7 +692,7 @@
                     </tr>
                 `).join('');
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-red-500">Gagal memuat data arsip.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-red-500">Gagal memuat data arsip. Pastikan backend app.py menyala.</td></tr>`;
             }
         }
 
@@ -708,6 +712,7 @@
                     `;
                     
                     if (data.summary) {
+                        // MERENDER MARKDOWN DARI DATABASE AGAR TABELNYA TETAP RAPI
                         document.getElementById('ai-summary-text').innerHTML = marked.parse(data.summary);
                         document.getElementById('ai-summary-container').classList.remove('hidden');
                     } else {
@@ -737,6 +742,7 @@
             }
         }
 
+        // Panggil otomatis pas menu archive di-klik
         document.getElementById('nav-archive').addEventListener('click', loadArchives);
     </script>
 </body>         

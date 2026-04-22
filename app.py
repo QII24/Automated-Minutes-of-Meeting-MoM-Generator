@@ -75,7 +75,6 @@ def transcribe():
     file.save(filepath)
 
     try:
-        # PENGATURAN ANTI-HALUSINASI
         result = model.transcribe(
             filepath, 
             language=current_config['language'] if current_config['language'] != 'auto' else None,
@@ -113,28 +112,26 @@ def summarize_meeting():
     if not raw_text or len(raw_text) < 10:
         return jsonify({"error": "Teks terlalu pendek untuk dirangkum."}), 400
         
-    # INSTRUKSI BARU: Diperketat dan dipaksa buat tabel dengan 3 kolom spesifik
+    # PROMPT DIPERBAIKI: Memaksa Tabel Pisah Kolom
     prompt_instruksi = f"""
     Kamu adalah asisten sekretaris profesional. Tugasmu mengubah teks transkripsi rapat berikut menjadi Minutes of Meeting (MoM).
     
-    ATURAN PENTING:
+    ATURAN PENTING (WAJIB DIIKUTI):
     1. Gunakan bahasa Indonesia yang rapi dan profesional.
-    2. WAJIB gunakan format Markdown di bawah ini tanpa mengubah nama strukturnya.
-    3. Bagian "Action Items" WAJIB berupa tabel Markdown dengan 3 kolom persis seperti contoh. Jangan gabungkan ke dalam paragraf biasa.
-    4. Jika teks transkripsi tidak masuk akal (hanya kata acak/noise mic), isi ringkasan dengan kalimat "Tidak ada informasi rapat yang jelas untuk disimpulkan." dan kosongkan tabelnya.
+    2. Bagian "Action Items" WAJIB berupa TABEL Markdown dengan 3 kolom terpisah. 
+    3. WAJIB pisahkan antara "Siapa (PIC)", "Apa tugasnya", dan "Deadline kapan" ke dalam kolom yang berbeda. Jangan digabung.
+    4. Jika teks transkripsi berantakan/hanya kata acak, isi ringkasan dengan kalimat "Tidak ada informasi rapat yang jelas."
     
     FORMAT YANG WAJIB DIGUNAKAN:
     
     ### 📝 MINUTES OF MEETING (MoM)
     **📌 Topik Rapat:** (Tebak topik utama dari pembahasan)
-    **💡 Ringkasan:** (Buat poin-poin singkat dan jelas dari pembahasan)
+    **💡 Ringkasan:** (Buat poin-poin singkat dan jelas)
     
     ### 🎯 Action Items (Delegasi Tugas)
-    (Wajib bentuk TABEL. Jika info tidak disebutkan, tulis "Tidak disebutkan")
-    
     | Siapa (PIC) | Apa (Tugas/Action Item) | Kapan (Deadline) |
     |---|---|---|
-    | (nama/divisi) | (deskripsi tugas) | (waktu deadline) |
+    | (Nama) | (Deskripsi tugas) | (Waktu deadline) |
     
     ---
     Teks Transkripsi Rapat:
